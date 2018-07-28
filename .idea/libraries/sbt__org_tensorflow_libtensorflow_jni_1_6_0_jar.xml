@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="sbt: org.tensorflow:libtensorflow_jni:1.6.0:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/org.tensorflow/libtensorflow_jni/jars/libtensorflow_jni-1.6.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
