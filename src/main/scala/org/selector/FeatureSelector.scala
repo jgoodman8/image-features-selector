@@ -1,38 +1,48 @@
 package org.selector
 
-import java.nio.file.Paths
+import java.io.File
 
 import com.databricks.sparkdl.DeepImageFeaturizer
-import org.apache.spark.SparkConf
-import org.apache.spark.ml.image.ImageSchema._
 import org.apache.spark.ml.Pipeline
-import org.apache.spark.sql._
+import org.apache.spark.ml.classification.LogisticRegression
+import org.apache.spark.ml.image.ImageSchema._
+import org.apache.spark.sql.functions.lit
+import org.apache.spark.{SparkConf, SparkContext}
+
 
 object FeatureSelector {
+
   def main(args: Array[String]): Unit = {
-    val sparkConf = new SparkConf().setAppName("ImageFeatureSelector").setMaster("local")
-    //val sparkContext = new SparkContext(sparkConf)
+    val sparkConfiguration = new SparkConf().setAppName("ImageFeatureSelector").setMaster("local[2]")
+    val sparkContext = new SparkContext(sparkConfiguration)
 
-    val testImage = "images"
-    //val singleClassImages = "../zeppelin-spark-standalone-cluster/notebooks/tiny-imagenet-200/train/n01443537/images"
+    val trainImagesFolder = new File("../tiny-imagenet-200/train")
+    val train = trainImagesFolder.listFiles()
+      .map((imageFolder: File) => {
+        readImages(imageFolder.getAbsolutePath + "/images")
+          .withColumn("label", lit(imageFolder.getName))
+      })
 
-    val train_images = readImages(testImage)
+    //    val train_images = readImages(testImage)
+    //    val myUDf = udf(() => Array("test"))
 
-    train_images.foreach { rrow =>
-      val row = rrow.getAs[Row](0)
-      print(row)
-      val imageData = getData(row)
-      val height = getHeight(row)
-      val width = getWidth(row)
+    //    train_images.withColumn("label", myUDf())
+    //    train_images.show()
 
-      println(s"${height}x${width}")
-    }
+    val featuresExtractor: DeepImageFeaturizer = new DeepImageFeaturizer()
+      .setModelName("InceptionV3")
+    val logisticRegression = new LogisticRegression()
+      .setMaxIter(20)
+      .setRegParam(0.05)
+      .setElasticNetParam(0.3)
+      .setLabelCol("label")
 
-    train_images.show()
+    val pipeline: Pipeline = new Pipeline()
+      .setStages(Array(featuresExtractor, logisticRegression))
 
-    val featuresExtractor: DeepImageFeaturizer = new DeepImageFeaturizer().setModelName("InceptionV3")
-    val pipeline: Pipeline = new Pipeline().setStages(Array(featuresExtractor))
+    val model = pipeline.fit(train)
 
-    val model = pipeline.fit(train_images)
+    //    println(model)
   }
+
 }
