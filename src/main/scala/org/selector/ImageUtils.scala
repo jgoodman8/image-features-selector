@@ -2,45 +2,51 @@ package org.selector
 
 import java.io.File
 
-import org.apache.spark.SparkContext
-import org.apache.spark.ml.image.ImageSchema.readImages
+import org.apache.spark.ml.image.ImageSchema._
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.lit
-import org.apache.spark.sql.{DataFrame, Encoders, Row, SQLContext}
 
-class ImageUtils(sparkContext: SparkContext) {
-
-  private val sqlContext = new SQLContext(sparkContext)
+class ImageUtils {
 
   def loadTrainData(basePath: String): DataFrame = {
-    this.loadData(new File(basePath.concat("/train")))
+    this.loadData(new File(basePath.concat("/train": String)))
   }
 
   def loadTestData(basePath: String): DataFrame = {
-    this.loadData(new File(basePath.concat("/test")))
+    this.loadData(new File(basePath.concat("/test": String)))
   }
 
   private def loadData(folder: File): DataFrame = {
-    val data: Seq[(Row, String)] = folder
+    val dataByLabel: List[DataFrame] = folder
       .listFiles
-      .flatMap(createImageDFWithLabel) //(_: (Encoders.type [Row], String))
-      .toSeq
+      .map(createImageDFWithLabel)
+      .toList
 
-    this.sqlContext
-      .createDataFrame(this.sparkContext.parallelize(data))
-      .toDF("image", "label")
+    createImageDataFrame(dataByLabel)
   }
 
-  private def findImagesPath(folder: File) = {
+  private def createImageDataFrame(dataFrameList: List[DataFrame]): DataFrame = {
+    if (dataFrameList.nonEmpty) {
+      var data: DataFrame = dataFrameList.head
+
+      for (labelIndex <- 1 until dataFrameList.length) {
+        data = data.union(dataFrameList(labelIndex))
+      }
+
+      return data
+    }
+
+    throw new Exception("DataFrame List of each image type is empty")
+  }
+
+  private def findImagesPath(folder: File): String = {
     folder.getAbsolutePath + "/images"
   }
 
-  private def createImageDFWithLabel(folder: File): Array[(Row, String)] = {
-    val dataFolder = this.findImagesPath(folder)
+  private def createImageDFWithLabel(folder: File): DataFrame = {
+    val label: Int = folder.getName.substring(1: Int).toInt
 
-    readImages(dataFolder)
-      .withColumn("label", lit(folder.getName))
-      .collect()
-      .map(x => (x.getAs[Row](0), x.getString(1)))
-    //      .asInstanceOf[Array[(Any, String)]]
+    readImages(this.findImagesPath(folder))
+      .withColumn("label": String, lit(label))
   }
 }

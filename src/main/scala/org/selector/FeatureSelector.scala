@@ -10,17 +10,23 @@ import org.apache.spark.{SparkConf, SparkContext}
 object FeatureSelector {
 
   def main(args: Array[String]): Unit = {
-    val sparkConfiguration = new SparkConf().setAppName("ImageFeatureSelector").setMaster("local[4]")
+    val sparkConfiguration = new SparkConf()
+      .setAppName("ImageFeatureSelector")
+      .setMaster("local[4]")
     val sparkContext = new SparkContext(sparkConfiguration)
 
     val Array(basePath: String) = args
 
-    val imageUtils = new ImageUtils(sparkContext)
-    val train: DataFrame = imageUtils.loadTrainData(basePath)
+    val imageUtils = new ImageUtils()
+    val train: DataFrame = imageUtils
+      .loadTrainData(basePath)
     // val test: DataFrame = imageUtils.loadTestData(basePath)
 
     val featuresExtractor: DeepImageFeaturizer = new DeepImageFeaturizer()
+      .setInputCol("image")
+      .setOutputCol("features")
       .setModelName("InceptionV3")
+
     val logisticRegression = new LogisticRegression()
       .setMaxIter(20)
       .setRegParam(0.05)
