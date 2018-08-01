@@ -43,7 +43,7 @@ salient features. This type of approach is at the head of the state of the art, 
 problems. Therefore, it can be very interesting to make a comparison between the results obtained with the methods of 
 feature selection traditional and hybrid, based on neural networks.
 
-## <a name="content"/>2. What this project contains</a>
+## <a name="content"/>2. What does this project contain</a>
 
 This project will try to solve the problems described at the top. For it, it will focus in:
 
