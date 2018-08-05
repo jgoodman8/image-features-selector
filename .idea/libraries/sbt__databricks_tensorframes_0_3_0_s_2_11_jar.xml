@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="sbt: databricks:tensorframes:0.3.0-s_2.11:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/databricks/tensorframes/jars/tensorframes-0.3.0-s_2.11.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

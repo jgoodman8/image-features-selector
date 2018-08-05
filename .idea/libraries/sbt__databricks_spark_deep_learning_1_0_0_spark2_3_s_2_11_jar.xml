@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="sbt: databricks:spark-deep-learning:1.0.0-spark2.3-s_2.11:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/databricks/spark-deep-learning/jars/spark-deep-learning-1.0.0-spark2.3-s_2.11.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
