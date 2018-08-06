@@ -3,7 +3,7 @@ package org.ifs
 import com.databricks.sparkdl.DeepImageFeaturizer
 import org.apache.spark.ml.classification.{LogisticRegression, LogisticRegressionModel}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
-import org.apache.spark.ml.feature.ChiSqSelector
+import org.apache.spark.ml.feature.{ChiSqSelector, ChiSqSelectorModel}
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions.rand
 import org.apache.spark.{SparkConf, SparkContext}
@@ -17,8 +17,8 @@ object IFSResearch {
     val sparkConfiguration = new SparkConf()
       .setMaster(master)
       .setAppName("ImageFeatureSelector")
-      .set("spark.executor.memory", "1g")
-      .set("spark.executor.cores", "4")
+      .set("spark.executor.memory", "900M")
+      .set("spark.cores.max", "4")
 
     val sparkContext = new SparkContext(sparkConfiguration)
 
@@ -28,7 +28,10 @@ object IFSResearch {
     val testWithFeatures = extractFeaturesByMethod(train, FeatureExtraction.InceptionV3)
 
     val chiSqSelector: ChiSqSelector = FeatureSelection.getChiSqSelector() // Features Selection
-    val trainWithSelectedFeatures: DataFrame = chiSqSelector.fit(trainWithFeatures).transform(trainWithFeatures)
+    val chiSqSelectorModel: ChiSqSelectorModel = chiSqSelector.fit(trainWithFeatures)
+
+    val trainWithSelectedFeatures: DataFrame = chiSqSelectorModel.transform(trainWithFeatures)
+    val testWithSelectedFeatures: DataFrame = chiSqSelectorModel.transform(testWithFeatures)
 
     val logisticRegression: LogisticRegression = ModelUtils.getLogisticRegression() // Model train
     val logisticRegressionModel: LogisticRegressionModel = logisticRegression.fit(trainWithSelectedFeatures)
@@ -42,10 +45,8 @@ object IFSResearch {
 
     print("Training set accuracy = " + multiClassEvaluator.evaluate(validationPrediction).toString)
 
-    // TODO: Select same features in test set as in training set
-
     val testPrediction = logisticRegressionModel // Model test
-      .transform(testWithFeatures)
+      .transform(testWithSelectedFeatures)
       .select("prediction", "label")
 
     print("Test set accuracy = " + multiClassEvaluator.evaluate(testPrediction).toString)
@@ -60,7 +61,7 @@ object IFSResearch {
     Array(train, test)
   }
 
-  private def extractFeaturesByMethod(train: DataFrame, method: String): DataFrame = {
+  private def extractFeaturesByMethod(data: DataFrame, method: String): DataFrame = {
 
     method match {
       case FeatureExtraction.InceptionV3 => {
@@ -68,7 +69,7 @@ object IFSResearch {
           .getDeepImageFeaturizer(FeatureExtraction.InceptionV3)
 
         val trainWithFeatures: DataFrame = featuresExtractor
-          .transform(train)
+          .transform(data)
           .select("features", "label")
 
         trainWithFeatures
