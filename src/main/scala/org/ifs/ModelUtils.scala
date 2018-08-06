@@ -1,8 +1,8 @@
-package org.selector
+package org.ifs
 
 import org.apache.spark.ml.classification.LogisticRegression
 
-class ModelUtils {
+object ModelUtils {
 
   def getLogisticRegression(input: String = "features",
                             label: String = "label",

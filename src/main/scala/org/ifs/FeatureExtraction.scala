@@ -1,4 +1,4 @@
-package org.selector
+package org.ifs
 
 import com.databricks.sparkdl.DeepImageFeaturizer
 
