@@ -1,7 +1,7 @@
 package org.ifs
 
-import java.io.File
-
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.SparkContext
 import org.apache.spark.ml.image.ImageSchema._
 import org.apache.spark.rdd.RDD
@@ -14,12 +14,15 @@ class ImageUtils(sparkContext: SparkContext) {
   private val sqlContext = new SQLContext(sparkContext)
   private val trainFolderName: String = "train"
   private val testFolderName: String = "val"
+  private val hadoopFileSystem = FileSystem.get(new Configuration())
 
   def loadTrainData(basePath: String): DataFrame = {
-    val trainFolder = new File(basePath.concat("/": String).concat(trainFolderName))
 
-    val dataByLabel: List[DataFrame] = trainFolder
-      .listFiles
+    val trainPath: Path = new Path(basePath.concat("/": String).concat(trainFolderName))
+
+    val dataByLabel: List[DataFrame] = hadoopFileSystem
+      .listStatus(trainPath)
+      .map(folder => folder.getPath)
       .map(createImageDFWithLabel)
       .toList
 
@@ -27,10 +30,11 @@ class ImageUtils(sparkContext: SparkContext) {
   }
 
   def loadTestData(basePath: String): DataFrame = {
-    val testFolder = new File(basePath.concat("/": String).concat(testFolderName))
+    val testFolder = new Path(basePath.concat("/": String).concat(testFolderName))
 
     var testLabels = getTestLabels(testFolder)
-    var testImages: DataFrame = readImages(this.findImagesPath(testFolder))
+    val imagesPath: String = testFolder.toUri.toString.concat("/images": String)
+    var testImages: DataFrame = readImages(imagesPath)
 
     testLabels = testLabels.withColumn("labelsIds", monotonically_increasing_id())
     testImages = testImages.withColumn("imagesIds", monotonically_increasing_id())
@@ -44,18 +48,16 @@ class ImageUtils(sparkContext: SparkContext) {
     test
   }
 
-  private def getTestLabels(testFolder: File): DataFrame = {
+  private def getTestLabels(testFolder: Path): DataFrame = {
     val testAnnotations: RDD[Row] = sqlContext.read
       .format("com.databricks.spark.csv")
       .option("delimiter", "\t")
       .option("header", "false")
-      .load(testFolder.getAbsolutePath.concat("/val_annotations.txt"))
+      .load(testFolder.toUri.toString.concat("/val_annotations.txt"))
       .toDF("fileName", "label", "dim1", "dim2", "dim3", "dim4")
       .select("label")
       .rdd
-      .map(row => {
-        Row(row.getString(0).substring(1: Int).toInt)
-      })
+      .map(row => Row(row.getString(0).substring(1: Int).toInt))
 
     val schema = new StructType().add(StructField("label", IntegerType))
 
@@ -76,14 +78,11 @@ class ImageUtils(sparkContext: SparkContext) {
     throw new Exception("DataFrame List of each image type is empty")
   }
 
-  private def findImagesPath(folder: File): String = {
-    folder.getAbsolutePath + "/images"
-  }
-
-  private def createImageDFWithLabel(folder: File): DataFrame = {
+  private def createImageDFWithLabel(folder: Path): DataFrame = {
     val label: Int = folder.getName.substring(1: Int).toInt
+    val imagesPath: String = folder.asInstanceOf[Path].toUri.toString + "/images"
 
-    readImages(this.findImagesPath(folder))
+    readImages(imagesPath)
       .withColumn("label": String, lit(label))
   }
 }
