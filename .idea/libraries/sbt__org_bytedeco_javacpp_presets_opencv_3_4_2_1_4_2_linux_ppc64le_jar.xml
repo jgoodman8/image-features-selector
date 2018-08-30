@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="sbt: org.bytedeco.javacpp-presets:opencv:3.4.2-1.4.2:linux-ppc64le:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/org.bytedeco.javacpp-presets/opencv/jars/opencv-3.4.2-1.4.2-linux-ppc64le.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

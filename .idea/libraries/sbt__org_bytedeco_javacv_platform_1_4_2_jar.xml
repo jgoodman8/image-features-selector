@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="sbt: org.bytedeco:javacv-platform:1.4.2:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/org.bytedeco/javacv-platform/jars/javacv-platform-1.4.2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

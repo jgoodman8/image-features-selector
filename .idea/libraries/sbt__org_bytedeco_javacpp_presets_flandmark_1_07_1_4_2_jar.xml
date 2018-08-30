@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="sbt: org.bytedeco.javacpp-presets:flandmark:1.07-1.4.2:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/org.bytedeco.javacpp-presets/flandmark/jars/flandmark-1.07-1.4.2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/org.bytedeco.javacpp-presets/flandmark/srcs/flandmark-1.07-1.4.2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

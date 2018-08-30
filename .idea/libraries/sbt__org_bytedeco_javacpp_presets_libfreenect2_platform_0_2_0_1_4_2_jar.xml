@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="sbt: org.bytedeco.javacpp-presets:libfreenect2-platform:0.2.0-1.4.2:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/org.bytedeco.javacpp-presets/libfreenect2-platform/jars/libfreenect2-platform-0.2.0-1.4.2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

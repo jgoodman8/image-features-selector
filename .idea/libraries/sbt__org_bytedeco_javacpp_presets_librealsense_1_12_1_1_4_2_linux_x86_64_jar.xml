@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="sbt: org.bytedeco.javacpp-presets:librealsense:1.12.1-1.4.2:linux-x86_64:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/org.bytedeco.javacpp-presets/librealsense/jars/librealsense-1.12.1-1.4.2-linux-x86_64.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
