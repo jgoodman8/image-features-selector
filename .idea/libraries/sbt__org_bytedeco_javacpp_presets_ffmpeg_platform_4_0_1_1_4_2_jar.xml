@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="sbt: org.bytedeco.javacpp-presets:ffmpeg-platform:4.0.1-1.4.2:jar">
-    <CLASSES>
-      <root url="jar://$USER_HOME$/.ivy2/cache/org.bytedeco.javacpp-presets/ffmpeg-platform/jars/ffmpeg-platform-4.0.1-1.4.2.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>

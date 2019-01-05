@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="sbt: org.bytedeco.javacpp-presets:tesseract:4.0.0-beta.3-1.4.2:linux-armhf:jar">
-    <CLASSES>
-      <root url="jar://$USER_HOME$/.ivy2/cache/org.bytedeco.javacpp-presets/tesseract/jars/tesseract-4.0.0-beta.3-1.4.2-linux-armhf.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>
