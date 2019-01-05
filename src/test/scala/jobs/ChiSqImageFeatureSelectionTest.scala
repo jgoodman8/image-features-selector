@@ -10,7 +10,9 @@ class ChiSqImageFeatureSelectionTest extends FlatSpec with Matchers with BeforeA
 
   val labels = "label"
   val features = "features"
+  val selectedFeatures = "features_selected"
   var sparkSession: SparkSession = _
+  val csvRoute = "../datasets/inception_v3.csv"
 
   override def beforeAll(): Unit = {
     sparkSession = SparkSession.builder()
@@ -24,7 +26,6 @@ class ChiSqImageFeatureSelectionTest extends FlatSpec with Matchers with BeforeA
   }
 
   "toDenseDF" should "transform a DataFrame by adding a label column and a features dense one" in {
-
     val dataset = sparkSession.createDataFrame(
       Seq((Random.nextDouble(), Random.nextDouble(), Random.nextDouble()))
     ).toDF("x", "y", "z")
@@ -38,12 +39,24 @@ class ChiSqImageFeatureSelectionTest extends FlatSpec with Matchers with BeforeA
   }
 
   "getDataFromFile" should "load the features from a correct csv route" in {
-    val csvRoute = "../datasets/inception_v3.csv"
-
     val data: DataFrame = ChiSqImageFeatureSelection.getDataFromFile(csvRoute, sparkSession, features, labels)
 
     assert(data.count() > 0)
     assert(data.columns.contains(features))
     assert(data.columns.contains(labels))
+  }
+
+  "selectFeatures" should "select the best features" in {
+    val data: DataFrame = ChiSqImageFeatureSelection.getDataFromFile(csvRoute, sparkSession, features, labels)
+
+    val selectedData: DataFrame = ChiSqImageFeatureSelection
+      .selectFeatures(data, sparkSession, features, labels, selectedFeatures)
+
+    assert(selectedData.count() > 0)
+    assert(selectedData.columns.contains(selectedFeatures))
+  }
+
+  "runPipeline" should "do something xD" in {
+    ChiSqImageFeatureSelection.runPipeline(sparkSession, csvRoute)
   }
 }

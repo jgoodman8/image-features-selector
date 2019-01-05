@@ -64,13 +64,13 @@ object ChiSqImageFeatureSelection extends App {
     selector.fit(data).transform(data)
   }
 
-  def runPipeline(session: SparkSession): Unit = {
+  def runPipeline(session: SparkSession, fileRoute: String): Unit = {
     val featuresColumn = "features"
     val labelColumn = "label"
     val selectedFeaturesColumn = "selected_features"
 
-    val data = getDataFromFile(featuresFile, sparkSession, featuresColumn, labelColumn)
-    val selectedData = selectFeatures(data, sparkSession, featuresColumn, labelColumn, selectedFeaturesColumn)
+    val data = getDataFromFile(fileRoute, session, featuresColumn, labelColumn)
+    val selectedData = selectFeatures(data, session, featuresColumn, labelColumn, selectedFeaturesColumn)
 
     train(selectedData)
   }
@@ -78,5 +78,5 @@ object ChiSqImageFeatureSelection extends App {
   val Array(featuresFile) = args
   val sparkSession: SparkSession = SparkSession.builder().appName("ChiSqFeatureSelection").getOrCreate()
 
-  runPipeline(sparkSession)
+  runPipeline(sparkSession, featuresFile)
 }
