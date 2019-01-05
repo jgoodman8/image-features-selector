@@ -5,32 +5,31 @@ import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.{ChiSqSelector, VectorAssembler}
 import org.apache.spark.ml.tuning.CrossValidator
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.types.DoubleType
 
 object ChiSqImageFeatureSelection extends App {
 
-  private val featuresColumnName = "features"
-  private val labelColumnName = "label"
-  private val selectedFeaturesColumnName = "selected_features"
+  def getDataFromFile(fileRoute: String,
+                      sparkSession: SparkSession,
+                      featuresOutput: String,
+                      labelsOutput: String): DataFrame = {
 
-  def getDataFromFile(fileRoute: String, sparkSession: SparkSession): DataFrame = {
-    var data = sparkSession.read.format("csv")
+    val data = sparkSession.read.format("csv")
       .option("header", "true")
+      .option("inferSchema", "true")
       .load(fileRoute)
 
-    data.columns.foreach((columnName: String) => {
-      data = data.withColumn(columnName, col(columnName).cast(DoubleType))
-    })
+    toDenseDF(data, featuresOutput, labelsOutput)
+  }
 
-    val assembler = new VectorAssembler()
+  def toDenseDF(data: DataFrame, featuresOutput: String, labelsOutput: String): DataFrame = {
+    var dataFrame = new VectorAssembler()
       .setInputCols(data.columns.dropRight(1))
-      .setOutputCol(featuresColumnName)
+      .setOutputCol(featuresOutput)
+      .transform(data)
 
-    var assembledData = assembler.transform(data)
-    assembledData = assembledData.withColumn(labelColumnName, data.col(data.columns.last))
+    dataFrame = dataFrame.withColumn(labelsOutput, data.col(data.columns.last))
 
-    assembledData
+    dataFrame
   }
 
   def train(data: DataFrame): Unit = {
@@ -49,20 +48,31 @@ object ChiSqImageFeatureSelection extends App {
     println(model.avgMetrics)
   }
 
-  def selectFeatures(data: DataFrame, sparkSession: SparkSession): DataFrame = {
+  def selectFeatures(data: DataFrame,
+                     sparkSession: SparkSession,
+                     features: String,
+                     labels: String,
+                     output: String,
+                     featuresSelected: Int = 10): DataFrame = {
+
     val selector = new ChiSqSelector()
-      .setNumTopFeatures(10)
-      .setFeaturesCol(featuresColumnName)
-      .setLabelCol(labelColumnName)
-      .setOutputCol(selectedFeaturesColumnName)
+      .setNumTopFeatures(featuresSelected)
+      .setFeaturesCol(features)
+      .setLabelCol(labels)
+      .setOutputCol(output)
 
     selector.fit(data).transform(data)
   }
 
   def runPipeline(session: SparkSession): Unit = {
-    val data = getDataFromFile(featuresFile, sparkSession)
-    val dataFrameWithSelectedFeatures = selectFeatures(data, sparkSession)
-    train(dataFrameWithSelectedFeatures)
+    val featuresColumn = "features"
+    val labelColumn = "label"
+    val selectedFeaturesColumn = "selected_features"
+
+    val data = getDataFromFile(featuresFile, sparkSession, featuresColumn, labelColumn)
+    val selectedData = selectFeatures(data, sparkSession, featuresColumn, labelColumn, selectedFeaturesColumn)
+
+    train(selectedData)
   }
 
   val Array(featuresFile) = args
