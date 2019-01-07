@@ -53,13 +53,13 @@ object ChiSqImageFeatureSelection extends App {
 
     val crossValidator = new CrossValidator()
       .setEstimator(logisticRegression)
-      .setEvaluator(new MulticlassClassificationEvaluator)
+      .setEvaluator(new MulticlassClassificationEvaluator().setLabelCol(labelColumn))
       .setEstimatorParamMaps(paramGrid)
       .setNumFolds(5)
 
     val model = crossValidator.fit(data)
 
-    println(model.avgMetrics)
+    model.avgMetrics.foreach(metric => println(metric)) // TODO: remove and return the best model
   }
 
   def selectFeatures(data: DataFrame,
@@ -86,7 +86,7 @@ object ChiSqImageFeatureSelection extends App {
     var data = getDataFromFile(fileRoute, session, featuresColumn, labelColumn)
     data = selectFeatures(data, session, featuresColumn, labelColumn, selectedFeaturesColumn)
 
-    train(data, featuresColumn, selectedFeaturesColumn)
+    train(data, selectedFeaturesColumn, labelColumn)
   }
 
   val Array(featuresFile) = args
