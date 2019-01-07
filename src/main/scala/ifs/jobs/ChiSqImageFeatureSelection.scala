@@ -2,9 +2,11 @@ package ifs.jobs
 
 import org.apache.spark.ml.classification.LogisticRegression
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
-import org.apache.spark.ml.feature.{ChiSqSelector, VectorAssembler}
-import org.apache.spark.ml.tuning.CrossValidator
+import org.apache.spark.ml.feature.{ChiSqSelector, StringIndexer, VectorAssembler}
+import org.apache.spark.ml.tuning.{CrossValidator, ParamGridBuilder}
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.types.DoubleType
 
 object ChiSqImageFeatureSelection extends App {
 
@@ -22,25 +24,37 @@ object ChiSqImageFeatureSelection extends App {
   }
 
   def toDenseDF(data: DataFrame, featuresOutput: String, labelsOutput: String): DataFrame = {
-    var dataFrame = new VectorAssembler()
-      .setInputCols(data.columns.dropRight(1))
-      .setOutputCol(featuresOutput)
+    var dataFrame = new StringIndexer()
+      .setInputCol(data.columns.last)
+      .setOutputCol(labelsOutput)
+      .fit(data)
       .transform(data)
 
-    dataFrame = dataFrame.withColumn(labelsOutput, data.col(data.columns.last))
+    dataFrame = dataFrame.withColumn(labelsOutput, col(labelsOutput).cast(DoubleType))
+
+    dataFrame = new VectorAssembler()
+      .setInputCols(data.columns.dropRight(2).drop(1))
+      .setOutputCol(featuresOutput)
+      .transform(dataFrame)
 
     dataFrame
   }
 
-  def train(data: DataFrame): Unit = {
+  def train(data: DataFrame, featuresColumn: String, labelColumn: String): Unit = {
     val logisticRegression = new LogisticRegression()
       .setMaxIter(10)
-      .setRegParam(0.3)
       .setElasticNetParam(0.8)
+      .setFeaturesCol(featuresColumn)
+      .setLabelCol(labelColumn)
+
+    val paramGrid = new ParamGridBuilder()
+      .addGrid(logisticRegression.regParam, Array(0.2, 0.3))
+      .build()
 
     val crossValidator = new CrossValidator()
       .setEstimator(logisticRegression)
       .setEvaluator(new MulticlassClassificationEvaluator)
+      .setEstimatorParamMaps(paramGrid)
       .setNumFolds(5)
 
     val model = crossValidator.fit(data)
@@ -66,13 +80,13 @@ object ChiSqImageFeatureSelection extends App {
 
   def runPipeline(session: SparkSession, fileRoute: String): Unit = {
     val featuresColumn = "features"
-    val labelColumn = "label"
+    val labelColumn = "output_label"
     val selectedFeaturesColumn = "selected_features"
 
-    val data = getDataFromFile(fileRoute, session, featuresColumn, labelColumn)
-    val selectedData = selectFeatures(data, session, featuresColumn, labelColumn, selectedFeaturesColumn)
+    var data = getDataFromFile(fileRoute, session, featuresColumn, labelColumn)
+    data = selectFeatures(data, session, featuresColumn, labelColumn, selectedFeaturesColumn)
 
-    train(selectedData)
+    train(data, featuresColumn, selectedFeaturesColumn)
   }
 
   val Array(featuresFile) = args

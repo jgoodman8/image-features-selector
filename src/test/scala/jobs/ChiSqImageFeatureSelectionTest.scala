@@ -8,11 +8,11 @@ import scala.util.Random
 
 class ChiSqImageFeatureSelectionTest extends FlatSpec with Matchers with BeforeAndAfterAll {
 
-  val labels = "label"
   val features = "features"
+  val labels = "output_label"
   val selectedFeatures = "features_selected"
   var sparkSession: SparkSession = _
-  val csvRoute = "../datasets/inception_v3.csv"
+  val csvRoute = "../datasets/lbp.csv" // "../datasets/inception_v3.csv"
 
   override def beforeAll(): Unit = {
     sparkSession = SparkSession.builder()
@@ -44,6 +44,8 @@ class ChiSqImageFeatureSelectionTest extends FlatSpec with Matchers with BeforeA
     assert(data.count() > 0)
     assert(data.columns.contains(features))
     assert(data.columns.contains(labels))
+
+    println(data.first())
   }
 
   "selectFeatures" should "select the best features" in {
