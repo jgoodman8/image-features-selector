@@ -33,7 +33,7 @@ object ChiSqImageFeatureSelection extends App {
     dataFrame = dataFrame.withColumn(labelsOutput, col(labelsOutput).cast(DoubleType))
 
     dataFrame = new VectorAssembler()
-      .setInputCols(data.columns.dropRight(2).drop(1))
+      .setInputCols(data.columns.dropRight(1))
       .setOutputCol(featuresOutput)
       .transform(dataFrame)
 

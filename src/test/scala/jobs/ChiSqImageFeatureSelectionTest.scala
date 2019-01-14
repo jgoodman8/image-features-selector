@@ -12,13 +12,19 @@ class ChiSqImageFeatureSelectionTest extends FlatSpec with Matchers with BeforeA
   val labels = "output_label"
   val selectedFeatures = "features_selected"
   var sparkSession: SparkSession = _
-  val csvRoute = "../datasets/lbp.csv" // "../datasets/inception_v3.csv"
+  val csvRoute = "../datasets/inception_v3.csv"
 
   override def beforeAll(): Unit = {
     sparkSession = SparkSession.builder()
       .appName("Test Session")
-      .master("local")
+      .master("local[4]")
+      .config("spark.driver.memory", "6g")
+      .config("spark.executor.memory", "6g")
+      .config("spark.driver.maxResultSize", "2g")
+      .config("spark.shuffle.spill", "false")
       .getOrCreate()
+
+    sparkSession.sparkContext.setCheckpointDir("/tmp/spark/checkpoint")
   }
 
   override def afterAll(): Unit = {
