@@ -93,4 +93,6 @@ object ChiSqImageFeatureSelection extends App {
   val sparkSession: SparkSession = SparkSession.builder().appName("ChiSqFeatureSelection").getOrCreate()
 
   runPipeline(sparkSession, featuresFile)
+
+  sparkSession.stop()
 }
