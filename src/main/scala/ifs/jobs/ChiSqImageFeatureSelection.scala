@@ -1,14 +1,16 @@
 package ifs.jobs
 
-import org.apache.spark.ml.classification.LogisticRegression
+import org.apache.spark.internal.Logging
+import org.apache.spark.ml.classification.{LogisticRegression, LogisticRegressionModel}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.{ChiSqSelector, StringIndexer, VectorAssembler}
 import org.apache.spark.ml.tuning.{CrossValidator, ParamGridBuilder}
+import org.apache.spark.ml.util.MLWritable
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types.DoubleType
 
-object ChiSqImageFeatureSelection extends App {
+object ChiSqImageFeatureSelection extends App with Logging {
 
   def getDataFromFile(fileRoute: String,
                       sparkSession: SparkSession,
@@ -40,7 +42,7 @@ object ChiSqImageFeatureSelection extends App {
     dataFrame
   }
 
-  def train(data: DataFrame, featuresColumn: String, labelColumn: String): Unit = {
+  def train(data: DataFrame, featuresColumn: String, labelColumn: String): MLWritable = {
     val logisticRegression = new LogisticRegression()
       .setMaxIter(10)
       .setElasticNetParam(0.8)
@@ -57,9 +59,18 @@ object ChiSqImageFeatureSelection extends App {
       .setEstimatorParamMaps(paramGrid)
       .setNumFolds(5)
 
-    val model = crossValidator.fit(data)
+    val crossValidatorModel = crossValidator.fit(data)
 
-    model.avgMetrics.foreach(metric => println(metric)) // TODO: remove and return the best model
+    crossValidatorModel.avgMetrics.foreach((metric: Double) => {
+      logInfo(metric.toString)
+    })
+
+    val model: LogisticRegressionModel = crossValidatorModel.bestModel match {
+      case m: LogisticRegressionModel => m
+      case _ => throw new Exception("Unexpected model type")
+    }
+
+    model
   }
 
   def selectFeatures(data: DataFrame,
@@ -78,7 +89,7 @@ object ChiSqImageFeatureSelection extends App {
     selector.fit(data).transform(data)
   }
 
-  def runPipeline(session: SparkSession, fileRoute: String): Unit = {
+  def runPipeline(session: SparkSession, fileRoute: String): MLWritable = {
     val featuresColumn = "features"
     val labelColumn = "output_label"
     val selectedFeaturesColumn = "selected_features"
@@ -89,10 +100,11 @@ object ChiSqImageFeatureSelection extends App {
     train(data, selectedFeaturesColumn, labelColumn)
   }
 
-  val Array(featuresFile) = args
+  val Array(featuresFile: String, modelSaveRoute: String) = args
   val sparkSession: SparkSession = SparkSession.builder().appName("ChiSqFeatureSelection").getOrCreate()
 
-  runPipeline(sparkSession, featuresFile)
+  val model: MLWritable = runPipeline(sparkSession, featuresFile)
+  model.save(modelSaveRoute)
 
   sparkSession.stop()
 }
