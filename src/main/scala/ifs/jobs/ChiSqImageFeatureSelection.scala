@@ -114,7 +114,7 @@ object ChiSqImageFeatureSelection extends App with Logging {
   val sparkSession: SparkSession = SparkSession.builder().appName("ChiSqFeatureSelection").getOrCreate()
 
   val model: MLWritable = runPipeline(sparkSession, featuresFile)
-  model.save(modelSaveRoute)
+  model.write.overwrite().save(modelSaveRoute)
 
   sparkSession.stop()
 }
