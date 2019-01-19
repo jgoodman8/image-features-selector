@@ -1,5 +1,7 @@
 package jobs
 
+import java.nio.file.{Files, Paths}
+
 import ifs.jobs.ChiSqImageFeatureSelection
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
@@ -65,6 +67,16 @@ class ChiSqImageFeatureSelectionTest extends FlatSpec with Matchers with BeforeA
   }
 
   "runPipeline" should "run the full pipeline without any failure" in {
-    ChiSqImageFeatureSelection.runPipeline(sparkSession, csvRoute)
+    ChiSqImageFeatureSelection.runPipeline(sparkSession, csvRoute, "./output/")
+  }
+
+  "saveMetrics" should "create a csv File" in {
+    val names = Array("a", "b", "c", "d")
+    val values = Array(1.0, 2.0, 3.0, 4.0)
+    val folder = "./output/" + System.currentTimeMillis().toString + ".csv"
+
+    ChiSqImageFeatureSelection.saveMetrics(sparkSession, names, values, folder)
+
+    Files.exists(Paths.get(folder))
   }
 }

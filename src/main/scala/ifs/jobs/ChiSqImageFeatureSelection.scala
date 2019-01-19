@@ -101,7 +101,8 @@ object ChiSqImageFeatureSelection extends App with Logging {
     selector.fit(data).transform(data)
   }
 
-  def evaluateAndStoreMetrics(model: LogisticRegressionModel,
+  def evaluateAndStoreMetrics(session: SparkSession,
+                              model: LogisticRegressionModel,
                               test: DataFrame,
                               labelColumn: String,
                               outputFolder: String): Unit = {
@@ -123,17 +124,21 @@ object ChiSqImageFeatureSelection extends App with Logging {
       metrics.append(metric)
     })
 
-    saveMetrics(metricNames, metrics.toArray, outputFolder)
+    saveMetrics(session, metricNames, metrics.toArray, outputFolder)
   }
 
-  private def saveMetrics(metricNames: Array[String], metrics: Array[Double], outputFolder: String): Unit = {
+  def saveMetrics(session: SparkSession,
+                  metricNames: Array[String],
+                  metrics: Array[Double],
+                  outputFolder: String): Unit = {
 
-    val sparkSession = SparkSession.builder().appName(appName).getOrCreate()
+    import session.implicits._
 
-    import sparkSession.implicits._
-
-    val metricsDF = metrics.toSeq.toDF(metricNames: _*)
     val csvRoute = outputFolder + System.currentTimeMillis().toString + ".csv"
+
+    val metricsDF = Seq(
+      (metrics(0), metrics(1), metrics(2), metrics(3))
+    ).toDF(metricNames: _*)
 
     metricsDF.write.csv(csvRoute)
   }
@@ -150,7 +155,7 @@ object ChiSqImageFeatureSelection extends App with Logging {
 
     val model = fit(train, selectedFeaturesColumn, labelColumn)
 
-    evaluateAndStoreMetrics(model, test, labelColumn, outputFolder)
+    evaluateAndStoreMetrics(session, model, test, labelColumn, outputFolder)
 
     model
   }
