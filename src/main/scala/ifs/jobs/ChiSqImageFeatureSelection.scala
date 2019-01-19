@@ -1,14 +1,18 @@
 package ifs.jobs
 
+import java.io.{File, PrintWriter}
+
 import org.apache.spark.internal.Logging
 import org.apache.spark.ml.classification.{LogisticRegression, LogisticRegressionModel}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.{ChiSqSelector, StringIndexer, VectorAssembler}
 import org.apache.spark.ml.tuning.{CrossValidator, ParamGridBuilder}
 import org.apache.spark.ml.util.MLWritable
-import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types.DoubleType
+import org.apache.spark.sql.{DataFrame, SparkSession}
+
+import scala.collection.mutable.ArrayBuffer
 
 object ChiSqImageFeatureSelection extends App with Logging {
 
@@ -42,7 +46,7 @@ object ChiSqImageFeatureSelection extends App with Logging {
     dataFrame
   }
 
-  def trainWithCrossValidation(data: DataFrame, featuresColumn: String, labelColumn: String): MLWritable = {
+  def fitWithCrossValidation(data: DataFrame, featuresColumn: String, labelColumn: String): MLWritable = {
     val logisticRegression = new LogisticRegression()
       .setMaxIter(10)
       .setElasticNetParam(0.8)
@@ -73,9 +77,9 @@ object ChiSqImageFeatureSelection extends App with Logging {
     model
   }
 
-  def train(data: DataFrame, featuresColumn: String, labelColumn: String): MLWritable = {
+  def fit(data: DataFrame, featuresColumn: String, labelColumn: String): LogisticRegressionModel = {
     val logisticRegression = new LogisticRegression()
-      .setMaxIter(10)
+      .setMaxIter(100)
       .setElasticNetParam(0.8)
       .setFeaturesCol(featuresColumn)
       .setLabelCol(labelColumn)
@@ -99,7 +103,41 @@ object ChiSqImageFeatureSelection extends App with Logging {
     selector.fit(data).transform(data)
   }
 
-  def runPipeline(session: SparkSession, fileRoute: String): MLWritable = {
+  def evaluateAndStoreMetrics(model: LogisticRegressionModel,
+                              test: DataFrame,
+                              labelColumn: String,
+                              outputFolder: String): Unit = {
+
+    val metricNames = Array("f1", "weightedPrecision", "weightedRecall", "accuracy")
+    val metrics: ArrayBuffer[Double] = new ArrayBuffer[Double]()
+
+
+    metricNames.foreach(metricName => {
+      val evaluator = new MulticlassClassificationEvaluator()
+        .setLabelCol(labelColumn)
+        .setPredictionCol("prediction")
+        .setMetricName(metricName)
+
+
+      val predictions = model.transform(test)
+      val metric = evaluator.evaluate(predictions)
+
+      metrics.append(metric)
+    })
+
+    saveCSV(metricNames, metrics.toArray, outputFolder)
+  }
+
+  private def saveCSV(metricNames: Array[String], metrics: Array[Double], outputFolder: String): Unit = {
+    val printer = new PrintWriter(new File(+System.currentTimeMillis() + ".csv"))
+
+    printer.write(metricNames.mkString(","))
+    printer.write(metrics.mkString(","))
+
+    printer.close()
+  }
+
+  def runPipeline(session: SparkSession, fileRoute: String, outputFolder: String): MLWritable = {
     val featuresColumn = "features"
     val labelColumn = "output_label"
     val selectedFeaturesColumn = "selected_features"
@@ -107,13 +145,19 @@ object ChiSqImageFeatureSelection extends App with Logging {
     var data = getDataFromFile(fileRoute, session, featuresColumn, labelColumn)
     data = selectFeatures(data, session, featuresColumn, labelColumn, selectedFeaturesColumn)
 
-    train(data, selectedFeaturesColumn, labelColumn)
+    val Array(train: DataFrame, test: DataFrame) = data.randomSplit(Array(0.7, 0.3))
+
+    val model = fit(train, selectedFeaturesColumn, labelColumn)
+
+    evaluateAndStoreMetrics(model, test, labelColumn, outputFolder)
+
+    model
   }
 
-  val Array(featuresFile: String, modelSaveRoute: String) = args
+  val Array(featuresFile: String, modelSaveRoute: String, outputFolder: String) = args
   val sparkSession: SparkSession = SparkSession.builder().appName("ChiSqFeatureSelection").getOrCreate()
 
-  val model: MLWritable = runPipeline(sparkSession, featuresFile)
+  val model: MLWritable = runPipeline(sparkSession, featuresFile, outputFolder)
   model.write.overwrite().save(modelSaveRoute)
 
   sparkSession.stop()
