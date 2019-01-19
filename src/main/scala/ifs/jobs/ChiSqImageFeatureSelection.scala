@@ -42,7 +42,7 @@ object ChiSqImageFeatureSelection extends App with Logging {
     dataFrame
   }
 
-  def train(data: DataFrame, featuresColumn: String, labelColumn: String): MLWritable = {
+  def trainWithCrossValidation(data: DataFrame, featuresColumn: String, labelColumn: String): MLWritable = {
     val logisticRegression = new LogisticRegression()
       .setMaxIter(10)
       .setElasticNetParam(0.8)
@@ -71,6 +71,16 @@ object ChiSqImageFeatureSelection extends App with Logging {
     }
 
     model
+  }
+
+  def train(data: DataFrame, featuresColumn: String, labelColumn: String): MLWritable = {
+    val logisticRegression = new LogisticRegression()
+      .setMaxIter(10)
+      .setElasticNetParam(0.8)
+      .setFeaturesCol(featuresColumn)
+      .setLabelCol(labelColumn)
+
+    logisticRegression.fit(data)
   }
 
   def selectFeatures(data: DataFrame,
