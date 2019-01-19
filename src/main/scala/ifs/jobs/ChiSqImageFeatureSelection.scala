@@ -1,7 +1,5 @@
 package ifs.jobs
 
-import java.io.{File, PrintWriter}
-
 import org.apache.spark.internal.Logging
 import org.apache.spark.ml.classification.{LogisticRegression, LogisticRegressionModel}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
@@ -125,16 +123,19 @@ object ChiSqImageFeatureSelection extends App with Logging {
       metrics.append(metric)
     })
 
-    saveCSV(metricNames, metrics.toArray, outputFolder)
+    saveMetrics(metricNames, metrics.toArray, outputFolder)
   }
 
-  private def saveCSV(metricNames: Array[String], metrics: Array[Double], outputFolder: String): Unit = {
-    val printer = new PrintWriter(new File(+System.currentTimeMillis() + ".csv"))
+  private def saveMetrics(metricNames: Array[String], metrics: Array[Double], outputFolder: String): Unit = {
 
-    printer.write(metricNames.mkString(","))
-    printer.write(metrics.mkString(","))
+    val sparkSession = SparkSession.builder().appName(appName).getOrCreate()
 
-    printer.close()
+    import sparkSession.implicits._
+
+    val metricsDF = metrics.toSeq.toDF(metricNames: _*)
+    val csvRoute = outputFolder + System.currentTimeMillis().toString + ".csv"
+
+    metricsDF.write.csv(csvRoute)
   }
 
   def runPipeline(session: SparkSession, fileRoute: String, outputFolder: String): MLWritable = {
@@ -154,8 +155,10 @@ object ChiSqImageFeatureSelection extends App with Logging {
     model
   }
 
+  val appName = "ChiSqFeatureSelection"
+
   val Array(featuresFile: String, modelSaveRoute: String, outputFolder: String) = args
-  val sparkSession: SparkSession = SparkSession.builder().appName("ChiSqFeatureSelection").getOrCreate()
+  val sparkSession: SparkSession = SparkSession.builder().appName(appName).getOrCreate()
 
   val model: MLWritable = runPipeline(sparkSession, featuresFile, outputFolder)
   model.write.overwrite().save(modelSaveRoute)
