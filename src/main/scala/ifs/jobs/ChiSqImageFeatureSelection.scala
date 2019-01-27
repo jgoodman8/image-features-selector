@@ -77,8 +77,9 @@ object ChiSqImageFeatureSelection extends App with Logging {
 
   def fit(data: DataFrame, featuresColumn: String, labelColumn: String): LogisticRegressionModel = {
     val logisticRegression = new LogisticRegression()
-      .setMaxIter(100)
-      .setElasticNetParam(0.8)
+      .setMaxIter(10000)
+      .setElasticNetParam(0.1)
+      .setRegParam(0.05)
       .setFeaturesCol(featuresColumn)
       .setLabelCol(labelColumn)
 
@@ -134,7 +135,7 @@ object ChiSqImageFeatureSelection extends App with Logging {
 
     import session.implicits._
 
-    val csvRoute = outputFolder + System.currentTimeMillis().toString + ".csv"
+    val csvRoute = outputFolder + System.currentTimeMillis().toString
 
     val metricsDF = Seq(
       (metrics(0), metrics(1), metrics(2), metrics(3))
@@ -143,7 +144,7 @@ object ChiSqImageFeatureSelection extends App with Logging {
     metricsDF.write.csv(csvRoute)
   }
 
-  def runPipeline(session: SparkSession, fileRoute: String, outputFolder: String): MLWritable = {
+  def runFullPipeline(session: SparkSession, fileRoute: String, outputFolder: String): MLWritable = {
     val featuresColumn = "features"
     val labelColumn = "output_label"
     val selectedFeaturesColumn = "selected_features"
@@ -155,6 +156,23 @@ object ChiSqImageFeatureSelection extends App with Logging {
 
     val model = fit(train, selectedFeaturesColumn, labelColumn)
 
+    evaluateAndStoreMetrics(session, model, train, labelColumn, outputFolder)
+    evaluateAndStoreMetrics(session, model, test, labelColumn, outputFolder)
+
+    model
+  }
+
+  def runTrainPipeline(session: SparkSession, fileRoute: String, outputFolder: String): MLWritable = {
+    val featuresColumn = "features"
+    val labelColumn = "output_label"
+
+    val data = getDataFromFile(fileRoute, session, featuresColumn, labelColumn)
+
+    val Array(train: DataFrame, test: DataFrame) = data.randomSplit(Array(0.7, 0.3))
+
+    val model = fit(train, featuresColumn, labelColumn)
+
+    evaluateAndStoreMetrics(session, model, train, labelColumn, outputFolder)
     evaluateAndStoreMetrics(session, model, test, labelColumn, outputFolder)
 
     model
@@ -162,10 +180,15 @@ object ChiSqImageFeatureSelection extends App with Logging {
 
   val appName = "ChiSqFeatureSelection"
 
-  val Array(featuresFile: String, modelSaveRoute: String, outputFolder: String) = args
+  val Array(featuresFile: String, modelSaveRoute: String, outputFolder: String, onlyTrain: String) = args
   val sparkSession: SparkSession = SparkSession.builder().appName(appName).getOrCreate()
 
-  val model: MLWritable = runPipeline(sparkSession, featuresFile, outputFolder)
+  val model: MLWritable = if (onlyTrain == null || !onlyTrain.toBoolean) {
+    runFullPipeline(sparkSession, featuresFile, outputFolder)
+  } else {
+    runTrainPipeline(sparkSession, featuresFile, outputFolder)
+  }
+
   model.write.overwrite().save(modelSaveRoute)
 
   sparkSession.stop()
