@@ -9,10 +9,13 @@ import org.apache.spark.ml.util.MLWritable
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import com.typesafe.config.{Config, ConfigFactory}
 
 import scala.collection.mutable.ArrayBuffer
 
 object ChiSqImageFeatureSelection extends App with Logging {
+
+  val configuration: Config = ConfigFactory.load("application.conf")
 
   def getDataFromFile(fileRoute: String,
                       sparkSession: SparkSession,
@@ -77,9 +80,9 @@ object ChiSqImageFeatureSelection extends App with Logging {
 
   def fit(data: DataFrame, featuresColumn: String, labelColumn: String): LogisticRegressionModel = {
     val logisticRegression = new LogisticRegression()
-      .setMaxIter(10000)
-      .setElasticNetParam(0.1)
-      .setRegParam(0.05)
+      .setMaxIter(configuration.getInt("Model.maxIter"))
+      .setElasticNetParam(configuration.getDouble("Model.elasticNetParam"))
+      .setRegParam(configuration.getDouble("Model.regParam"))
       .setFeaturesCol(featuresColumn)
       .setLabelCol(labelColumn)
 
@@ -152,7 +155,9 @@ object ChiSqImageFeatureSelection extends App with Logging {
     var data = getDataFromFile(fileRoute, session, featuresColumn, labelColumn)
     data = selectFeatures(data, session, featuresColumn, labelColumn, selectedFeaturesColumn)
 
-    val Array(train: DataFrame, test: DataFrame) = data.randomSplit(Array(0.7, 0.3))
+    val Array(train: DataFrame, test: DataFrame) = data.randomSplit(
+      Array(configuration.getDouble("DataSplit.train"), configuration.getDouble("DataSplit.test"))
+    )
 
     val model = fit(train, selectedFeaturesColumn, labelColumn)
 
