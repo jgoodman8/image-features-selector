@@ -1,21 +1,19 @@
 package ifs.jobs
 
+import ifs.utils.ConfigurationService
 import org.apache.spark.internal.Logging
 import org.apache.spark.ml.classification.{LogisticRegression, LogisticRegressionModel}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.{ChiSqSelector, StringIndexer, VectorAssembler}
 import org.apache.spark.ml.tuning.{CrossValidator, ParamGridBuilder}
 import org.apache.spark.ml.util.MLWritable
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types.DoubleType
-import org.apache.spark.sql.{DataFrame, SparkSession}
-import com.typesafe.config.{Config, ConfigFactory}
 
 import scala.collection.mutable.ArrayBuffer
 
 object ChiSqImageFeatureSelection extends App with Logging {
-
-  val configuration: Config = ConfigFactory.load("application.conf")
 
   def getDataFromFile(fileRoute: String,
                       sparkSession: SparkSession,
@@ -80,11 +78,14 @@ object ChiSqImageFeatureSelection extends App with Logging {
 
   def fit(data: DataFrame, featuresColumn: String, labelColumn: String): LogisticRegressionModel = {
     val logisticRegression = new LogisticRegression()
-      .setMaxIter(configuration.getInt("Model.maxIter"))
-      .setElasticNetParam(configuration.getDouble("Model.elasticNetParam"))
-      .setRegParam(configuration.getDouble("Model.regParam"))
+      .setMaxIter(ConfigurationService.Model.getMaxIter)
+      .setElasticNetParam(ConfigurationService.Model.getElasticNetParam)
+      .setRegParam(ConfigurationService.Model.getRegParam)
       .setFeaturesCol(featuresColumn)
       .setLabelCol(labelColumn)
+      .setFamily("multinomial")
+    println(featuresColumn)
+    println(labelColumn)
 
     logisticRegression.fit(data)
   }
@@ -156,7 +157,7 @@ object ChiSqImageFeatureSelection extends App with Logging {
     data = selectFeatures(data, session, featuresColumn, labelColumn, selectedFeaturesColumn)
 
     val Array(train: DataFrame, test: DataFrame) = data.randomSplit(
-      Array(configuration.getDouble("DataSplit.train"), configuration.getDouble("DataSplit.test"))
+      Array(ConfigurationService.Data.getTrainSplitRatio, ConfigurationService.Data.getTestSplitRatio)
     )
 
     val model = fit(train, selectedFeaturesColumn, labelColumn)
@@ -173,12 +174,14 @@ object ChiSqImageFeatureSelection extends App with Logging {
 
     val data = getDataFromFile(fileRoute, session, featuresColumn, labelColumn)
 
-    val Array(train: DataFrame, test: DataFrame) = data.randomSplit(Array(0.7, 0.3))
+    //    val Array(train: DataFrame, test: DataFrame) = data.randomSplit(Array(0.7, 0.3))
 
-    val model = fit(train, featuresColumn, labelColumn)
+    data.show(3)
 
-    evaluateAndStoreMetrics(session, model, train, labelColumn, outputFolder)
-    evaluateAndStoreMetrics(session, model, test, labelColumn, outputFolder)
+    val model = fit(data, featuresColumn, labelColumn)
+
+    evaluateAndStoreMetrics(session, model, data, labelColumn, outputFolder)
+    //    evaluateAndStoreMetrics(session, model, test, labelColumn, outputFolder)
 
     model
   }

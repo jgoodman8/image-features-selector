@@ -14,7 +14,7 @@ class ChiSqImageFeatureSelectionTest extends FlatSpec with Matchers with BeforeA
   val labels = "output_label"
   val selectedFeatures = "features_selected"
   var sparkSession: SparkSession = _
-  val csvRoute = "../datasets/inception_v3.csv"
+  val csvRoute = "/home/jgfigueira/datasets/imagenet-features/vgg19.csv"
 
   override def beforeAll(): Unit = {
     sparkSession = SparkSession.builder()
@@ -68,6 +68,10 @@ class ChiSqImageFeatureSelectionTest extends FlatSpec with Matchers with BeforeA
 
   "runPipeline" should "run the full pipeline without any failure" in {
     ChiSqImageFeatureSelection.runFullPipeline(sparkSession, csvRoute, "./output/")
+  }
+
+  "runPipeline" should "run the train pipeline without any failure" in {
+    ChiSqImageFeatureSelection.runTrainPipeline(sparkSession, csvRoute, "./output/")
   }
 
   "saveMetrics" should "create a csv File" in {
