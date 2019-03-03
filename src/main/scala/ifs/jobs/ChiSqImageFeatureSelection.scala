@@ -7,9 +7,9 @@ import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.{ChiSqSelector, StringIndexer, VectorAssembler}
 import org.apache.spark.ml.tuning.{CrossValidator, ParamGridBuilder}
 import org.apache.spark.ml.util.MLWritable
-import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types.DoubleType
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -189,9 +189,13 @@ object ChiSqImageFeatureSelection extends App with Logging {
   val appName = "ChiSqFeatureSelection"
 
   val Array(featuresFile: String, modelSaveRoute: String, outputFolder: String, onlyTrain: String) = args
-  val sparkSession: SparkSession = SparkSession.builder().appName(appName).getOrCreate()
 
-  val model: MLWritable = if (onlyTrain == null || !onlyTrain.toBoolean) {
+  val sparkSession: SparkSession = SparkSession.builder()
+    .appName(appName)
+    .config("spark.driver.maxResultSize", ConfigurationService.Session.getDriverMaxResultSize)
+    .getOrCreate()
+
+  val model: MLWritable = if (!onlyTrain.toBoolean) {
     runFullPipeline(sparkSession, featuresFile, outputFolder)
   } else {
     runTrainPipeline(sparkSession, featuresFile, outputFolder)

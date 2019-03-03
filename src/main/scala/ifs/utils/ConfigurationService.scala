@@ -19,4 +19,8 @@ object ConfigurationService {
     def getTestSplitRatio: Double = configuration.getDouble("DataSplit.test")
   }
 
+  object Session {
+    def getDriverMaxResultSize: String = configuration.getString("Session.driverMaxResultSize")
+  }
+
 }
