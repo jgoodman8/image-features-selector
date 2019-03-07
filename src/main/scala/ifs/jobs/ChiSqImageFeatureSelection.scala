@@ -164,6 +164,9 @@ object ChiSqImageFeatureSelection extends App with Logging {
 
     val Array(train: DataFrame, test: DataFrame) = data.randomSplit(getSplitData)
 
+    train.persist()
+    test.persist()
+
     val model = fit(train, featuresColumn, labelColumn)
 
     evaluateAndStoreMetrics(session, model, test, labelColumn, outputFolder)
@@ -179,6 +182,8 @@ object ChiSqImageFeatureSelection extends App with Logging {
     .appName(appName)
     .config("spark.driver.maxResultSize", ConfigurationService.Session.getDriverMaxResultSize)
     .getOrCreate()
+
+  sparkSession.sparkContext.setCheckpointDir(ConfigurationService.Session.getCheckpointDir)
 
   val model: MLWritable = if (!onlyTrain.toBoolean) {
     runFullPipeline(sparkSession, featuresFile, outputFolder)

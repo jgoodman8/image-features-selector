@@ -21,6 +21,8 @@ object ConfigurationService {
 
   object Session {
     def getDriverMaxResultSize: String = configuration.getString("Session.driverMaxResultSize")
+
+    def getCheckpointDir: String = configuration.getString("Session.checkpointDir")
   }
 
 }
