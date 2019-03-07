@@ -11,8 +11,6 @@ import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
-import scala.collection.mutable.ArrayBuffer
-
 object ChiSqImageFeatureSelection extends App with Logging {
 
   def getDataFromFile(fileRoute: String,
@@ -83,9 +81,6 @@ object ChiSqImageFeatureSelection extends App with Logging {
       .setRegParam(ConfigurationService.Model.getRegParam)
       .setFeaturesCol(featuresColumn)
       .setLabelCol(labelColumn)
-      .setFamily("multinomial")
-    println(featuresColumn)
-    println(labelColumn)
 
     logisticRegression.fit(data)
   }
@@ -112,38 +107,34 @@ object ChiSqImageFeatureSelection extends App with Logging {
                               labelColumn: String,
                               outputFolder: String): Unit = {
 
-    val metricNames = Array("f1", "weightedPrecision", "weightedRecall", "accuracy")
-    val metrics: ArrayBuffer[Double] = new ArrayBuffer[Double]()
+    val metricName = "accuracy"
+
+    val evaluator = new MulticlassClassificationEvaluator()
+      .setLabelCol(labelColumn)
+      .setPredictionCol("prediction")
+      .setMetricName(metricName)
 
 
-    metricNames.foreach(metricName => {
-      val evaluator = new MulticlassClassificationEvaluator()
-        .setLabelCol(labelColumn)
-        .setPredictionCol("prediction")
-        .setMetricName(metricName)
+    val predictions = model.transform(test)
+    val metricValue = evaluator.evaluate(predictions)
 
+    saveMetrics(session, metricName, metricValue, outputFolder)
+  }
 
-      val predictions = model.transform(test)
-      val metric = evaluator.evaluate(predictions)
-
-      metrics.append(metric)
-    })
-
-    saveMetrics(session, metricNames, metrics.toArray, outputFolder)
+  def getSplitData: Array[Double] = {
+    Array(ConfigurationService.Data.getTrainSplitRatio, ConfigurationService.Data.getTestSplitRatio)
   }
 
   def saveMetrics(session: SparkSession,
-                  metricNames: Array[String],
-                  metrics: Array[Double],
+                  metricNames: String,
+                  metrics: Double,
                   outputFolder: String): Unit = {
 
     import session.implicits._
 
     val csvRoute = outputFolder + System.currentTimeMillis().toString
 
-    val metricsDF = Seq(
-      (metrics(0), metrics(1), metrics(2), metrics(3))
-    ).toDF(metricNames: _*)
+    val metricsDF = Seq(metrics).toDF(metricNames)
 
     metricsDF.write.csv(csvRoute)
   }
@@ -156,13 +147,10 @@ object ChiSqImageFeatureSelection extends App with Logging {
     var data = getDataFromFile(fileRoute, session, featuresColumn, labelColumn)
     data = selectFeatures(data, session, featuresColumn, labelColumn, selectedFeaturesColumn)
 
-    val Array(train: DataFrame, test: DataFrame) = data.randomSplit(
-      Array(ConfigurationService.Data.getTrainSplitRatio, ConfigurationService.Data.getTestSplitRatio)
-    )
+    val Array(train: DataFrame, test: DataFrame) = data.randomSplit(getSplitData)
 
     val model = fit(train, selectedFeaturesColumn, labelColumn)
 
-    evaluateAndStoreMetrics(session, model, train, labelColumn, outputFolder)
     evaluateAndStoreMetrics(session, model, test, labelColumn, outputFolder)
 
     model
@@ -174,14 +162,11 @@ object ChiSqImageFeatureSelection extends App with Logging {
 
     val data = getDataFromFile(fileRoute, session, featuresColumn, labelColumn)
 
-    //    val Array(train: DataFrame, test: DataFrame) = data.randomSplit(Array(0.7, 0.3))
+    val Array(train: DataFrame, test: DataFrame) = data.randomSplit(getSplitData)
 
-    data.show(3)
+    val model = fit(train, featuresColumn, labelColumn)
 
-    val model = fit(data, featuresColumn, labelColumn)
-
-    evaluateAndStoreMetrics(session, model, data, labelColumn, outputFolder)
-    //    evaluateAndStoreMetrics(session, model, test, labelColumn, outputFolder)
+    evaluateAndStoreMetrics(session, model, test, labelColumn, outputFolder)
 
     model
   }
