@@ -47,13 +47,13 @@ object ChiSqImageFeatureSelection extends App with Logging {
     val assembledData = new VectorAssembler()
       .setInputCols(featuresInput)
       .setOutputCol(assembledFeatures)
-      .transform(assembledData)
+      .transform(data)
 
     val scaledData = new MinMaxScaler()
       .setInputCol(assembledFeatures)
       .setOutputCol(featuresOutput)
-      .fit(scaledData)
-      .transform(scaledData)
+      .fit(assembledData)
+      .transform(assembledData)
 
     scaledData
   }
