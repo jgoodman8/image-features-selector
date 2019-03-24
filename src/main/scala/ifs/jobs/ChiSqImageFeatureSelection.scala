@@ -4,7 +4,7 @@ import ifs.utils.ConfigurationService
 import org.apache.spark.internal.Logging
 import org.apache.spark.ml.classification.{LogisticRegression, LogisticRegressionModel}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
-import org.apache.spark.ml.feature.{ChiSqSelector, StringIndexer, VectorAssembler}
+import org.apache.spark.ml.feature.{ChiSqSelector, MinMaxScaler, StringIndexer, VectorAssembler}
 import org.apache.spark.ml.tuning.{CrossValidator, ParamGridBuilder}
 import org.apache.spark.ml.util.MLWritable
 import org.apache.spark.sql.functions.col
@@ -14,33 +14,48 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 object ChiSqImageFeatureSelection extends App with Logging {
 
   def getDataFromFile(fileRoute: String,
-                      sparkSession: SparkSession,
-                      featuresOutput: String,
-                      labelsOutput: String): DataFrame = {
+                      sparkSession: SparkSession): DataFrame = {
 
-    val data = sparkSession.read.format("csv")
+    sparkSession.read.format("csv")
       .option("header", "true")
       .option("inferSchema", "true")
       .load(fileRoute)
-
-    toDenseDF(data, featuresOutput, labelsOutput)
   }
 
-  def toDenseDF(data: DataFrame, featuresOutput: String, labelsOutput: String): DataFrame = {
-    var dataFrame = new StringIndexer()
-      .setInputCol(data.columns.last)
+  def preprocessData(data: DataFrame, featuresOutput: String, labelsOutput: String): DataFrame = {
+    var preprocessedData = preprocessLabels(data, labelsOutput)
+    preprocessedData = preprocessFeatures(preprocessedData, featuresOutput)
+
+    preprocessedData
+  }
+
+  private def preprocessLabels(data: DataFrame, labelsOutput: String): DataFrame = {
+    val labelsInput = data.columns.last
+    val indexedData = new StringIndexer()
+      .setInputCol(labelsInput)
       .setOutputCol(labelsOutput)
       .fit(data)
       .transform(data)
 
-    dataFrame = dataFrame.withColumn(labelsOutput, col(labelsOutput).cast(DoubleType))
+    indexedData.withColumn(labelsOutput, col(labelsOutput).cast(DoubleType))
+  }
 
-    dataFrame = new VectorAssembler()
-      .setInputCols(data.columns.dropRight(1))
+  private def preprocessFeatures(data: DataFrame,
+                                 featuresOutput: String,
+                                 assembledFeatures: String = "assembledFeatures"): DataFrame = {
+    val featuresInput = data.columns.dropRight(1)
+    val assembledData = new VectorAssembler()
+      .setInputCols(featuresInput)
+      .setOutputCol(assembledFeatures)
+      .transform(assembledData)
+
+    val scaledData = new MinMaxScaler()
+      .setInputCol(assembledFeatures)
       .setOutputCol(featuresOutput)
-      .transform(dataFrame)
+      .fit(scaledData)
+      .transform(scaledData)
 
-    dataFrame
+    scaledData
   }
 
   def fitWithCrossValidation(data: DataFrame, featuresColumn: String, labelColumn: String): MLWritable = {
@@ -144,13 +159,13 @@ object ChiSqImageFeatureSelection extends App with Logging {
     val labelColumn = "output_label"
     val selectedFeaturesColumn = "selected_features"
 
-    var data = getDataFromFile(fileRoute, session, featuresColumn, labelColumn)
+    var data = getDataFromFile(fileRoute, session)
+    data = preprocessData(data, featuresColumn, labelColumn)
     data = selectFeatures(data, session, featuresColumn, labelColumn, selectedFeaturesColumn)
 
     val Array(train: DataFrame, test: DataFrame) = data.randomSplit(getSplitData)
 
     val model = fit(train, selectedFeaturesColumn, labelColumn)
-
     evaluateAndStoreMetrics(session, model, test, labelColumn, outputFolder)
 
     model
@@ -160,7 +175,8 @@ object ChiSqImageFeatureSelection extends App with Logging {
     val featuresColumn = "features"
     val labelColumn = "output_label"
 
-    val data = getDataFromFile(fileRoute, session, featuresColumn, labelColumn)
+    var data = getDataFromFile(fileRoute, session)
+    data = preprocessData(data, featuresColumn, labelColumn)
 
     val Array(train: DataFrame, test: DataFrame) = data.randomSplit(getSplitData)
 
@@ -168,7 +184,6 @@ object ChiSqImageFeatureSelection extends App with Logging {
     test.persist()
 
     val model = fit(train, featuresColumn, labelColumn)
-
     evaluateAndStoreMetrics(session, model, test, labelColumn, outputFolder)
 
     model
@@ -176,7 +191,7 @@ object ChiSqImageFeatureSelection extends App with Logging {
 
   val appName = "ChiSqFeatureSelection"
 
-  val Array(featuresFile: String, modelSaveRoute: String, outputFolder: String, onlyTrain: String) = args
+  val Array(featuresFile: String, method: String) = args
 
   val sparkSession: SparkSession = SparkSession.builder()
     .appName(appName)
@@ -185,13 +200,18 @@ object ChiSqImageFeatureSelection extends App with Logging {
 
   sparkSession.sparkContext.setCheckpointDir(ConfigurationService.Session.getCheckpointDir)
 
-  val model: MLWritable = if (!onlyTrain.toBoolean) {
+  val modelsPath: String = ConfigurationService.Session.getModelDir
+  val outputFolder: String = ConfigurationService.Session.getOutputDir
+
+  val model: MLWritable = if (method == "chisq") {
     runFullPipeline(sparkSession, featuresFile, outputFolder)
+  } else if (method == "train") {
+    runTrainPipeline(sparkSession, featuresFile, outputFolder)
   } else {
     runTrainPipeline(sparkSession, featuresFile, outputFolder)
   }
 
-  model.write.overwrite().save(modelSaveRoute)
+  model.write.overwrite().save(modelsPath)
 
   sparkSession.stop()
 }

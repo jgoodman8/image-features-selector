@@ -38,7 +38,7 @@ class ChiSqImageFeatureSelectionTest extends FlatSpec with Matchers with BeforeA
       Seq((Random.nextDouble(), Random.nextDouble(), Random.nextDouble()))
     ).toDF("x", "y", "z")
 
-    val data = ChiSqImageFeatureSelection.toDenseDF(dataset, features, labels)
+    val data = ChiSqImageFeatureSelection.preprocessData(dataset, features, labels)
 
     assert(data.count() == 1)
     assert(data.columns.length == 5)
