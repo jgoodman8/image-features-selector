@@ -154,16 +154,21 @@ object ChiSqImageFeatureSelection extends App with Logging {
     metricsDF.write.csv(csvRoute)
   }
 
-  def runFullPipeline(session: SparkSession, fileRoute: String, outputFolder: String): MLWritable = {
-    val featuresColumn = "features"
-    val labelColumn = "output_label"
-    val selectedFeaturesColumn = "selected_features"
+  def runFullPipeline(session: SparkSession, fileRoute: String, outputFolder: String,
+                      featuresColumn: String = "features", labelColumn: String = "output_label",
+                      selectedFeaturesColumn: String = "selected_features"): MLWritable = {
 
     var data = getDataFromFile(fileRoute, session)
     data = preprocessData(data, featuresColumn, labelColumn)
+
+    data.persist()
+
     data = selectFeatures(data, session, featuresColumn, labelColumn, selectedFeaturesColumn)
 
     val Array(train: DataFrame, test: DataFrame) = data.randomSplit(getSplitData)
+
+    train.persist()
+    test.persist()
 
     val model = fit(train, selectedFeaturesColumn, labelColumn)
     evaluateAndStoreMetrics(session, model, test, labelColumn, outputFolder)
@@ -171,9 +176,8 @@ object ChiSqImageFeatureSelection extends App with Logging {
     model
   }
 
-  def runTrainPipeline(session: SparkSession, fileRoute: String, outputFolder: String): MLWritable = {
-    val featuresColumn = "features"
-    val labelColumn = "output_label"
+  def runTrainPipeline(session: SparkSession, fileRoute: String, outputFolder: String,
+                       featuresColumn: String = "features", labelColumn: String = "output_label"): MLWritable = {
 
     var data = getDataFromFile(fileRoute, session)
     data = preprocessData(data, featuresColumn, labelColumn)
