@@ -120,10 +120,8 @@ object ChiSqImageFeatureSelection extends App with Logging {
                               model: LogisticRegressionModel,
                               test: DataFrame,
                               labelColumn: String,
-                              outputFolder: String): Unit = {
-
-    val metricName = "accuracy"
-
+                              outputFolder: String,
+                              metricName: String = "accuracy"): Unit = {
     val evaluator = new MulticlassClassificationEvaluator()
       .setLabelCol(labelColumn)
       .setPredictionCol("prediction")
@@ -161,14 +159,9 @@ object ChiSqImageFeatureSelection extends App with Logging {
     var data = getDataFromFile(fileRoute, session)
     data = preprocessData(data, featuresColumn, labelColumn)
 
-    data.persist()
-
     data = selectFeatures(data, session, featuresColumn, labelColumn, selectedFeaturesColumn)
 
     val Array(train: DataFrame, test: DataFrame) = data.randomSplit(getSplitData)
-
-    train.persist()
-    test.persist()
 
     val model = fit(train, selectedFeaturesColumn, labelColumn)
     evaluateAndStoreMetrics(session, model, test, labelColumn, outputFolder)
