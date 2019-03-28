@@ -7,7 +7,8 @@ import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.{ChiSqSelector, MinMaxScaler, StringIndexer, VectorAssembler}
 import org.apache.spark.ml.tuning.{CrossValidator, ParamGridBuilder}
 import org.apache.spark.ml.util.MLWritable
-import org.apache.spark.sql.functions.col
+import org.apache.spark.mllib.linalg.Vector
+import org.apache.spark.sql.functions.{col, udf}
 import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
@@ -104,16 +105,16 @@ object ChiSqImageFeatureSelection extends App with Logging {
                      sparkSession: SparkSession,
                      features: String,
                      labels: String,
-                     output: String,
-                     featuresSelected: Int = 10): DataFrame = {
+                     selectedFeatures: String,
+                     numTopFeatures: Int = 10): DataFrame = {
 
     val selector = new ChiSqSelector()
-      .setNumTopFeatures(featuresSelected)
+      .setNumTopFeatures(numTopFeatures)
       .setFeaturesCol(features)
       .setLabelCol(labels)
-      .setOutputCol(output)
+      .setOutputCol(selectedFeatures)
 
-    selector.fit(data).transform(data)
+    selector.fit(data).transform(data).select(selectedFeatures, labels)
   }
 
   def evaluateAndStoreMetrics(session: SparkSession,
@@ -126,7 +127,6 @@ object ChiSqImageFeatureSelection extends App with Logging {
       .setLabelCol(labelColumn)
       .setPredictionCol("prediction")
       .setMetricName(metricName)
-
 
     val predictions = model.transform(test)
     val metricValue = evaluator.evaluate(predictions)
@@ -152,43 +152,48 @@ object ChiSqImageFeatureSelection extends App with Logging {
     metricsDF.write.csv(csvRoute)
   }
 
-  def runFullPipeline(session: SparkSession, fileRoute: String, outputFolder: String,
-                      featuresColumn: String = "features", labelColumn: String = "output_label",
-                      selectedFeaturesColumn: String = "selected_features"): MLWritable = {
+  private def extractDenseRows(data: DataFrame, featuresColumn: String): DataFrame = {
+    val featuresSize = data.first.getAs[org.apache.spark.mllib.linalg.Vector](featuresColumn).size
 
-    var data = getDataFromFile(fileRoute, session)
-    data = preprocessData(data, featuresColumn, labelColumn)
+    // Simple helper to convert vector to array<double>
+    val vecToSeq = udf((v: Vector) => v.toArray)
 
-    data = selectFeatures(data, session, featuresColumn, labelColumn, selectedFeaturesColumn)
+    // Prepare a list of columns to create
+    val exprs = (0 until featuresSize).map(i => col("_tmp").getItem(i).alias(s"f$i"))
 
-    val Array(train: DataFrame, test: DataFrame) = data.randomSplit(getSplitData)
-
-    val model = fit(train, selectedFeaturesColumn, labelColumn)
-    evaluateAndStoreMetrics(session, model, test, labelColumn, outputFolder)
-
-    model
+    data
+      .select(vecToSeq(col(featuresColumn)).alias("_tmp"))
+      .select(exprs: _*)
   }
 
-  def runTrainPipeline(session: SparkSession, fileRoute: String, outputFolder: String,
-                       featuresColumn: String = "features", labelColumn: String = "output_label"): MLWritable = {
+  def runFeatureSelectionPipeline(session: SparkSession, inputFile: String, outputFile: String,
+                                  featuresColumn: String = "features", labelColumn: String = "output_label",
+                                  selectedFeaturesColumn: String = "selected_features"): Unit = {
 
-    var data = getDataFromFile(fileRoute, session)
-    data = preprocessData(data, featuresColumn, labelColumn)
+    val data = preprocessData(getDataFromFile(inputFile, session), featuresColumn, labelColumn)
+
+    val selectedData = selectFeatures(data, session, featuresColumn, labelColumn, selectedFeaturesColumn)
+
+    extractDenseRows(selectedData, selectedFeaturesColumn)
+      .withColumn(labelColumn, selectedData(labelColumn))
+      .write.csv(outputFile)
+  }
+
+  def runTrainPipeline(session: SparkSession, inputFile: String, metricsPath: String, modelsPath: String,
+                       featuresColumn: String = "features", labelColumn: String = "output_label"): Unit = {
+
+    val data = preprocessData(getDataFromFile(inputFile, session), featuresColumn, labelColumn)
 
     val Array(train: DataFrame, test: DataFrame) = data.randomSplit(getSplitData)
-
-    train.persist()
-    test.persist()
 
     val model = fit(train, featuresColumn, labelColumn)
-    evaluateAndStoreMetrics(session, model, test, labelColumn, outputFolder)
 
-    model
+    evaluateAndStoreMetrics(session, model, test, labelColumn, metricsPath)
+
+    model.write.overwrite().save(modelsPath)
   }
 
-  val appName = "ChiSqFeatureSelection"
-
-  val Array(featuresFile: String, method: String) = args
+  val Array(appName: String, inputFile: String, outputFile: String, method: String) = args
 
   val sparkSession: SparkSession = SparkSession.builder()
     .appName(appName)
@@ -197,18 +202,14 @@ object ChiSqImageFeatureSelection extends App with Logging {
 
   sparkSession.sparkContext.setCheckpointDir(ConfigurationService.Session.getCheckpointDir)
 
-  val modelsPath: String = ConfigurationService.Session.getModelDir
-  val outputFolder: String = ConfigurationService.Session.getOutputDir
+  val modelsPath: String = ConfigurationService.Session.getModelPath
+  val metricsPath: String = ConfigurationService.Session.getMetricsPath
 
-  val model: MLWritable = if (method == "chisq") {
-    runFullPipeline(sparkSession, featuresFile, outputFolder)
+  if (method == "chisq") {
+    runFeatureSelectionPipeline(sparkSession, inputFile, outputFile)
   } else if (method == "train") {
-    runTrainPipeline(sparkSession, featuresFile, outputFolder)
-  } else {
-    runTrainPipeline(sparkSession, featuresFile, outputFolder)
+    runTrainPipeline(sparkSession, inputFile, metricsPath, modelsPath)
   }
-
-  model.write.overwrite().save(modelsPath)
 
   sparkSession.stop()
 }

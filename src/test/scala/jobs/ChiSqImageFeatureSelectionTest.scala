@@ -67,7 +67,7 @@ class ChiSqImageFeatureSelectionTest extends FlatSpec with Matchers with BeforeA
   }
 
   "runPipeline" should "run the full pipeline without any failure" in {
-    ChiSqImageFeatureSelection.runFullPipeline(sparkSession, csvRoute, "./output/")
+    ChiSqImageFeatureSelection.runFeatureSelectionPipeline(sparkSession, csvRoute, "./output/")
   }
 
   "runPipeline" should "run the train pipeline without any failure" in {

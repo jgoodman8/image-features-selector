@@ -24,9 +24,9 @@ object ConfigurationService {
 
     def getCheckpointDir: String = configuration.getString("Session.checkpointDir")
 
-    def getModelDir: String = configuration.getString("Session.modelDir")
+    def getModelPath: String = configuration.getString("Session.modelPath")
 
-    def getOutputDir: String = configuration.getString("Session.outputDir")
+    def getMetricsPath: String = configuration.getString("Session.metricsPath")
   }
 
 }
