@@ -11,6 +11,7 @@ import org.apache.spark.mllib.linalg.Vector
 import org.apache.spark.sql.functions.{col, udf}
 import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.storage.StorageLevel
 
 object ChiSqImageFeatureSelection extends App with Logging {
 
@@ -114,7 +115,10 @@ object ChiSqImageFeatureSelection extends App with Logging {
       .setLabelCol(labels)
       .setOutputCol(selectedFeatures)
 
-    selector.fit(data).transform(data).select(selectedFeatures, labels)
+    selector
+      .fit(data)
+      .transform(data)
+      .select(selectedFeatures, labels)
   }
 
   def evaluateAndStoreMetrics(session: SparkSession,
@@ -171,12 +175,17 @@ object ChiSqImageFeatureSelection extends App with Logging {
                                   selectedFeaturesColumn: String = "selected_features"): Unit = {
 
     val data = preprocessData(getDataFromFile(inputFile, session), featuresColumn, labelColumn)
+    data.persist(StorageLevel.MEMORY_AND_DISK_SER)
 
     val selectedData = selectFeatures(data, session, featuresColumn, labelColumn, selectedFeaturesColumn)
+    data.unpersist()
+    selectedData.persist(StorageLevel.MEMORY_AND_DISK_SER)
 
     extractDenseRows(selectedData, selectedFeaturesColumn)
       .withColumn(labelColumn, selectedData(labelColumn))
       .write.csv(outputFile)
+
+    selectedData.unpersist()
   }
 
   def runTrainPipeline(session: SparkSession, inputFile: String, metricsPath: String, modelsPath: String,
