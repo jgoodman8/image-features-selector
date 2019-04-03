@@ -1,8 +1,7 @@
 package jobs
 
-import java.nio.file.{Files, Paths}
-
 import ifs.jobs.ChiSqImageFeatureSelection
+import ifs.jobs.ChiSqImageFeatureSelection.{inputFile, metricsPath, modelsPath, sparkSession}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 
@@ -47,7 +46,7 @@ class ChiSqImageFeatureSelectionTest extends FlatSpec with Matchers with BeforeA
   }
 
   "getDataFromFile" should "load the features from a correct csv route" in {
-    val data: DataFrame = ChiSqImageFeatureSelection.getDataFromFile(csvRoute, sparkSession, features, labels)
+    val data: DataFrame = ChiSqImageFeatureSelection.getDataFromFile(csvRoute, sparkSession)
 
     assert(data.count() > 0)
     assert(data.columns.contains(features))
@@ -57,7 +56,7 @@ class ChiSqImageFeatureSelectionTest extends FlatSpec with Matchers with BeforeA
   }
 
   "selectFeatures" should "select the best features" in {
-    val data: DataFrame = ChiSqImageFeatureSelection.getDataFromFile(csvRoute, sparkSession, features, labels)
+    val data: DataFrame = ChiSqImageFeatureSelection.getDataFromFile(csvRoute, sparkSession)
 
     val selectedData: DataFrame = ChiSqImageFeatureSelection
       .selectFeatures(data, sparkSession, features, labels, selectedFeatures)
@@ -66,21 +65,12 @@ class ChiSqImageFeatureSelectionTest extends FlatSpec with Matchers with BeforeA
     assert(selectedData.columns.contains(selectedFeatures))
   }
 
-  "runPipeline" should "run the full pipeline without any failure" in {
-    ChiSqImageFeatureSelection.runFeatureSelectionPipeline(sparkSession, csvRoute, "./output/")
-  }
+  "trainPipeline" should "work" in {
 
-  "runPipeline" should "run the train pipeline without any failure" in {
-    ChiSqImageFeatureSelection.runTrainPipeline(sparkSession, csvRoute, "./output/")
-  }
+    val metricsPath = "./output/metrics.csv"
+    val modelsPath = "./output/models"
+    val inputFile = "./data/data.csv"
 
-  "saveMetrics" should "create a csv File" in {
-    val names = Array("a", "b", "c", "d")
-    val values = Array(1.0, 2.0, 3.0, 4.0)
-    val folder = "./output/" + System.currentTimeMillis().toString + ".csv"
-
-    ChiSqImageFeatureSelection.saveMetrics(sparkSession, names, values, folder)
-
-    Files.exists(Paths.get(folder))
+    ChiSqImageFeatureSelection.runTrainPipeline(sparkSession, inputFile, metricsPath, modelsPath)
   }
 }
