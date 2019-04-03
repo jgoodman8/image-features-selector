@@ -2,15 +2,15 @@ package ifs.jobs
 
 import ifs.utils.ConfigurationService
 import org.apache.spark.internal.Logging
-import org.apache.spark.ml.classification.{LogisticRegression, LogisticRegressionModel}
+import org.apache.spark.ml.classification.{LogisticRegression, LogisticRegressionModel, RandomForestClassificationModel, RandomForestClassifier}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.{ChiSqSelector, MinMaxScaler, StringIndexer, VectorAssembler}
 import org.apache.spark.ml.tuning.{CrossValidator, ParamGridBuilder}
 import org.apache.spark.ml.util.MLWritable
 import org.apache.spark.mllib.linalg.Vector
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions.{col, udf}
 import org.apache.spark.sql.types.DoubleType
-import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.storage.StorageLevel
 
 object ChiSqImageFeatureSelection extends App with Logging {
@@ -91,11 +91,8 @@ object ChiSqImageFeatureSelection extends App with Logging {
     model
   }
 
-  def fit(data: DataFrame, featuresColumn: String, labelColumn: String): LogisticRegressionModel = {
-    val logisticRegression = new LogisticRegression()
-      .setMaxIter(ConfigurationService.Model.getMaxIter)
-      .setElasticNetParam(ConfigurationService.Model.getElasticNetParam)
-      .setRegParam(ConfigurationService.Model.getRegParam)
+  def fit(data: DataFrame, featuresColumn: String, labelColumn: String): RandomForestClassificationModel = {
+    val logisticRegression = new RandomForestClassifier()
       .setFeaturesCol(featuresColumn)
       .setLabelCol(labelColumn)
 
@@ -122,7 +119,7 @@ object ChiSqImageFeatureSelection extends App with Logging {
   }
 
   def evaluateAndStoreMetrics(session: SparkSession,
-                              model: LogisticRegressionModel,
+                              model: RandomForestClassificationModel,
                               test: DataFrame,
                               labelColumn: String,
                               outputFolder: String,
