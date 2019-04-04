@@ -25,15 +25,17 @@ object ClassificationPipeline extends App with Logging {
     metricsDF.write.csv(csvRoute)
   }
 
-  def evaluateAndStoreMetrics(session: SparkSession, model: Model[_], test: DataFrame, label: String,
-                              outputFolder: String, metricName: String = "accuracy"): Unit = {
+  def evaluateAndStoreMetrics(session: SparkSession, model: Model[_], test: DataFrame, labelCol: String,
+                              outputFolder: String, metricName: String = "accuracy",
+                              predictionCol: String = "prediction"): Unit = {
+
+    val predictions = model.transform(test).select(labelCol, predictionCol)
 
     val evaluator = new MulticlassClassificationEvaluator()
-      .setLabelCol(label)
-      .setPredictionCol("prediction")
+      .setLabelCol(labelCol)
+      .setPredictionCol(predictionCol)
       .setMetricName(metricName)
 
-    val predictions = model.transform(test)
     val metricValue = evaluator.evaluate(predictions)
 
     this.saveMetrics(session, metricName, metricValue, outputFolder)

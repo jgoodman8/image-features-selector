@@ -2,8 +2,6 @@ package ifs.services
 
 import ifs.utils.ConfigurationService
 import org.apache.spark.ml.feature.{MinMaxScaler, StringIndexer, VectorAssembler}
-import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 object DataService {
