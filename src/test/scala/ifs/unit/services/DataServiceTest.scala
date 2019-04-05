@@ -1,6 +1,7 @@
-package ifs.services
+package ifs.unit.services
 
 import ifs.TestUtils
+import ifs.services.DataService
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 

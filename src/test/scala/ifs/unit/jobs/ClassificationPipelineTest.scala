@@ -1,5 +1,6 @@
-package ifs.jobs
+package ifs.unit.jobs
 
+import ifs.jobs.ClassificationPipeline
 import ifs.{Constants, TestUtils}
 import org.apache.spark.sql.SparkSession
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
@@ -21,11 +22,11 @@ class ClassificationPipelineTest extends FlatSpec with Matchers with BeforeAndAf
 
   "trainPipeline" should "classify the dataset using a logistic regression model" in {
     val method = Constants.LOGISTIC_REGRESSION
-    ClassificationPipeline.runTrainPipeline(sparkSession, testData, metricsPath, modelsPath, method)
+    ClassificationPipeline.run(sparkSession, testData, metricsPath, modelsPath, method)
   }
 
   it should "classify the dataset using a random forest model" in {
     val method = Constants.RANDOM_FOREST
-    ClassificationPipeline.runTrainPipeline(sparkSession, testData, metricsPath, modelsPath, method)
+    ClassificationPipeline.run(sparkSession, testData, metricsPath, modelsPath, method)
   }
 }

@@ -5,4 +5,5 @@ object Constants {
   val RANDOM_FOREST: String = "rf"
 
   val CHI_SQ = "chisq"
+  val MRMR = "mrmr"
 }
