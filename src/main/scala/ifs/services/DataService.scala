@@ -64,15 +64,19 @@ object DataService {
     var discreteData: DataFrame = data
 
     features.foreach(feature => {
-      discreteData = new QuantileDiscretizer()
-        .setInputCol(feature)
-        .setOutputCol("discrete_" + feature)
-        .setNumBuckets(10)
-        .fit(discreteData)
-        .transform(discreteData)
+      discreteData = this.discretizeColumn(discreteData, feature)
     })
 
     discreteData.drop(features: _*)
+  }
+
+  private def discretizeColumn(data: DataFrame, column: String): DataFrame = {
+    new QuantileDiscretizer()
+      .setInputCol(column)
+      .setOutputCol("discrete_" + column)
+      .setNumBuckets(10)
+      .fit(data)
+      .transform(data)
   }
 
   private def assembleFeatures(data: DataFrame, label: String, assembledFeatures: String): DataFrame = {

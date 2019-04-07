@@ -18,7 +18,9 @@ object ClassificationPipeline extends App with Logging {
 
     import session.implicits._
 
-    Seq(metrics).toDF(metricNames).write.mode(SaveMode.Overwrite).csv(outputFolder)
+    Seq(metrics).toDF(metricNames)
+      .write.mode(SaveMode.Overwrite)
+      .csv(outputFolder + System.currentTimeMillis().toString)
   }
 
   def evaluateAndStoreMetrics(session: SparkSession, model: Model[_], test: DataFrame, labelCol: String,

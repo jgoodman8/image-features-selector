@@ -4,7 +4,6 @@ import ifs.Constants
 import ifs.services.DataService
 import org.apache.spark.internal.Logging
 import org.apache.spark.ml.feature.{ChiSqSelector, InfoThSelector}
-import org.apache.spark.ml.linalg.{DenseVector, SparseVector}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 object FeatureSelectionPipeline extends App with Logging {
