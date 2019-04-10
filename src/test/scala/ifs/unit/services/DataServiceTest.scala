@@ -18,8 +18,8 @@ class DataServiceTest extends FlatSpec with Matchers with BeforeAndAfter {
     sparkSession.stop()
   }
 
-  "getDataFromFile" should "load the features from a correct csv route" in {
-    val data: DataFrame = DataService.getDataFromFile(sparkSession, dataFile)
+  "load" should "load the features from a correct csv route" in {
+    val data: DataFrame = DataService.load(sparkSession, dataFile)
 
     assert(data.count() > 0)
     assert(data.columns.length > 0)

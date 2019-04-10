@@ -27,11 +27,11 @@ class FeatureSelectionPipelineTest extends FlatSpec with Matchers with BeforeAnd
     FeatureSelectionPipeline.run(sparkSession, trainFile, testFile, outputPath, Constants.CHI_SQ, numFeatures)
 
     val outputTrain: String = TestUtils.findFileByWildcard(outputPath, pattern = "train")
-    val selectedTrain: DataFrame = DataService.getDataFromFile(sparkSession, outputTrain)
+    val selectedTrain: DataFrame = DataService.load(sparkSession, outputTrain)
     assert(selectedTrain.columns.length == numFeatures + 1)
 
     val outputTest: String = TestUtils.findFileByWildcard(outputPath, pattern = "test")
-    val selectedTest: DataFrame = DataService.getDataFromFile(sparkSession, outputTest)
+    val selectedTest: DataFrame = DataService.load(sparkSession, outputTest)
     assert(selectedTest.columns.length == numFeatures + 1)
   }
 
@@ -40,11 +40,11 @@ class FeatureSelectionPipelineTest extends FlatSpec with Matchers with BeforeAnd
     FeatureSelectionPipeline.run(sparkSession, trainFile, testFile, outputPath, Constants.MRMR, numFeatures)
 
     val outputTrain: String = TestUtils.findFileByWildcard(outputPath, pattern = "train")
-    val selectedTrain: DataFrame = DataService.getDataFromFile(sparkSession, outputTrain)
+    val selectedTrain: DataFrame = DataService.load(sparkSession, outputTrain)
     assert(selectedTrain.columns.length == numFeatures + 1)
 
     val outputTest: String = TestUtils.findFileByWildcard(outputPath, pattern = "test")
-    val selectedTest: DataFrame = DataService.getDataFromFile(sparkSession, outputTest)
+    val selectedTest: DataFrame = DataService.load(sparkSession, outputTest)
     assert(selectedTest.columns.length == numFeatures + 1)
   }
 }

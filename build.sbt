@@ -15,6 +15,7 @@ libraryDependencies += "org.bytedeco" % "javacv-platform" % "1.4.2"
 libraryDependencies += "com.github.tototoshi" %% "scala-csv" % "1.3.5"
 libraryDependencies += "com.typesafe" % "config" % "1.3.3"
 libraryDependencies += "sramirez" % "spark-infotheoretic-feature-selection" % "1.4.4" exclude("io.netty", "netty") exclude("commons-net", "commons-net") exclude("com.google.guava", "guava")  exclude("org.apache.spark", "spark-mllib")
+libraryDependencies += "sramirez" % "spark-RELIEFFC-fselection" % "0.5.0" exclude("org.apache.spark", "spark-mllib_2.11") exclude("org.apache.spark", "spark-core_2.11")
 
 libraryDependencies += "org.scalactic" %% "scalactic" % "3.0.5"
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5" % "test"

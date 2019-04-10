@@ -34,17 +34,17 @@ class ValidationTests extends FlatSpec with Matchers with BeforeAndAfter {
     FeatureSelectionPipeline.run(sparkSession, trainFile, testFile, featuresPath, featureSelectionMethod, numFeatures)
 
     val outputTrain: String = TestUtils.findFileByWildcard(featuresPath, pattern = "train")
-    val selectedTrain: DataFrame = DataService.getDataFromFile(sparkSession, outputTrain)
+    val selectedTrain: DataFrame = DataService.load(sparkSession, outputTrain)
     assert(selectedTrain.columns.length == numFeatures + 1)
 
     val outputTest: String = TestUtils.findFileByWildcard(featuresPath, pattern = "test")
-    val selectedTest: DataFrame = DataService.getDataFromFile(sparkSession, outputTest)
+    val selectedTest: DataFrame = DataService.load(sparkSession, outputTest)
     assert(selectedTest.columns.length == numFeatures + 1)
 
     ClassificationPipeline.run(sparkSession, outputTrain, outputTest, metricsPath, modelsPath, classificationMethod)
 
     val metricsFile: String = TestUtils.findFileByWildcard(metricsPath)
-    val metrics: DataFrame = DataService.getDataFromFile(sparkSession, metricsFile)
+    val metrics: DataFrame = DataService.load(sparkSession, metricsFile)
     assert(metrics.columns.length == 1)
     assert(metrics.count() == 1)
 
@@ -60,17 +60,17 @@ class ValidationTests extends FlatSpec with Matchers with BeforeAndAfter {
     FeatureSelectionPipeline.run(sparkSession, trainFile, testFile, featuresPath, featureSelectionMethod, numFeatures)
 
     val outputTrain: String = TestUtils.findFileByWildcard(featuresPath)
-    val selectedTrain: DataFrame = DataService.getDataFromFile(sparkSession, outputTrain)
+    val selectedTrain: DataFrame = DataService.load(sparkSession, outputTrain)
     assert(selectedTrain.columns.length == numFeatures + 1)
 
     val outputTest: String = TestUtils.findFileByWildcard(featuresPath)
-    val selectedTest: DataFrame = DataService.getDataFromFile(sparkSession, outputTest)
+    val selectedTest: DataFrame = DataService.load(sparkSession, outputTest)
     assert(selectedTest.columns.length == numFeatures + 1)
 
     ClassificationPipeline.run(sparkSession, outputTrain, outputTest, metricsPath, modelsPath, classificationMethod)
 
     val metricsFile: String = TestUtils.findFileByWildcard(metricsPath)
-    val metrics: DataFrame = DataService.getDataFromFile(sparkSession, metricsFile)
+    val metrics: DataFrame = DataService.load(sparkSession, metricsFile)
     assert(metrics.columns.length == 1)
     assert(metrics.count() == 1)
 

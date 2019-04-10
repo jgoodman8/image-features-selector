@@ -1,4 +1,4 @@
-package ifs.utils
+package ifs.services
 
 import com.typesafe.config.{Config, ConfigFactory}
 
@@ -11,6 +11,8 @@ object ConfigurationService {
     def getElasticNetParam: Double = configuration.getDouble("Model.elasticNetParam")
 
     def getRegParam: Double = configuration.getDouble("Model.regParam")
+
+    def getMetrics: Array[String] = Array("accuracy")
   }
 
   object Data {

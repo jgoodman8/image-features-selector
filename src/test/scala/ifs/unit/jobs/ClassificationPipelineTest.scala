@@ -29,7 +29,7 @@ class ClassificationPipelineTest extends FlatSpec with Matchers with BeforeAndAf
     ClassificationPipeline.run(sparkSession, trainFile, testFile, metricsPath, modelsPath, method)
 
     val metricsFile: String = TestUtils.findFileByWildcard(metricsPath)
-    val selectedTest: DataFrame = DataService.getDataFromFile(sparkSession, metricsFile)
+    val selectedTest: DataFrame = DataService.load(sparkSession, metricsFile)
     assert(selectedTest.columns.length == 1)
     assert(selectedTest.count() == 1)
 
@@ -42,7 +42,7 @@ class ClassificationPipelineTest extends FlatSpec with Matchers with BeforeAndAf
     ClassificationPipeline.run(sparkSession, trainFile, testFile, metricsPath, modelsPath, method)
 
     val metricsFile: String = TestUtils.findFileByWildcard(metricsPath)
-    val metrics: DataFrame = DataService.getDataFromFile(sparkSession, metricsFile)
+    val metrics: DataFrame = DataService.load(sparkSession, metricsFile)
     assert(metrics.columns.length == 1)
     assert(metrics.count() == 1)
 
