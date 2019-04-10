@@ -8,7 +8,7 @@ import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 class DataServiceTest extends FlatSpec with Matchers with BeforeAndAfter {
 
   var sparkSession: SparkSession = _
-  val testData: String = TestUtils.getTestDataRoute
+  val dataFile: String = TestUtils.getTestDataRoute
 
   before {
     sparkSession = TestUtils.getTestSession
@@ -19,11 +19,9 @@ class DataServiceTest extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   "getDataFromFile" should "load the features from a correct csv route" in {
-    val data: DataFrame = DataService.getDataFromFile(sparkSession, testData)
+    val data: DataFrame = DataService.getDataFromFile(sparkSession, dataFile)
 
     assert(data.count() > 0)
     assert(data.columns.length > 0)
-
-    println(data.first())
   }
 }

@@ -1,14 +1,16 @@
 package ifs.unit.jobs
 
 import ifs.jobs.ClassificationPipeline
+import ifs.services.DataService
 import ifs.{Constants, TestUtils}
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 class ClassificationPipelineTest extends FlatSpec with Matchers with BeforeAndAfter {
 
   var sparkSession: SparkSession = _
-  val testData: String = TestUtils.getTestDataRoute
+  val trainFile: String = TestUtils.getTestDataRoute
+  val testFile: String = TestUtils.getTestDataRoute
   val modelsPath: String = TestUtils.getModelsRoute
   val metricsPath: String = TestUtils.getMetricsOutputRoute
 
@@ -18,15 +20,33 @@ class ClassificationPipelineTest extends FlatSpec with Matchers with BeforeAndAf
 
   after {
     sparkSession.stop()
+    TestUtils.clearDirectory(modelsPath)
+    TestUtils.clearDirectory(metricsPath)
   }
 
   "trainPipeline" should "classify the dataset using a logistic regression model" in {
     val method = Constants.LOGISTIC_REGRESSION
-    ClassificationPipeline.run(sparkSession, testData, metricsPath, modelsPath, method)
+    ClassificationPipeline.run(sparkSession, trainFile, testFile, metricsPath, modelsPath, method)
+
+    val metricsFile: String = TestUtils.findFileByWildcard(metricsPath)
+    val selectedTest: DataFrame = DataService.getDataFromFile(sparkSession, metricsFile)
+    assert(selectedTest.columns.length == 1)
+    assert(selectedTest.count() == 1)
+
+    val modelFile: String = TestUtils.findFileByWildcard(modelsPath)
+    assert(modelFile.nonEmpty)
   }
 
   it should "classify the dataset using a random forest model" in {
     val method = Constants.RANDOM_FOREST
-    ClassificationPipeline.run(sparkSession, testData, metricsPath, modelsPath, method)
+    ClassificationPipeline.run(sparkSession, trainFile, testFile, metricsPath, modelsPath, method)
+
+    val metricsFile: String = TestUtils.findFileByWildcard(metricsPath)
+    val metrics: DataFrame = DataService.getDataFromFile(sparkSession, metricsFile)
+    assert(metrics.columns.length == 1)
+    assert(metrics.count() == 1)
+
+    val modelFile: String = TestUtils.findFileByWildcard(modelsPath)
+    assert(modelFile.nonEmpty)
   }
 }

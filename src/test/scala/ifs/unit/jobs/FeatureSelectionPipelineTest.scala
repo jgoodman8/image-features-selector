@@ -9,32 +9,42 @@ import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 class FeatureSelectionPipelineTest extends FlatSpec with Matchers with BeforeAndAfter {
 
   var sparkSession: SparkSession = _
-  val testData: String = TestUtils.getTestDataRoute
-  val outputFile: String = TestUtils.getFeaturesOutputRoute
+  val trainFile: String = TestUtils.getTestDataRoute
+  val testFile: String = TestUtils.getTestDataRoute
+  val outputPath: String = TestUtils.getFeaturesOutputRoute
 
   before {
-     sparkSession = TestUtils.getTestSession
+    sparkSession = TestUtils.getTestSession
   }
 
   after {
-     sparkSession.stop()
+    sparkSession.stop()
+    TestUtils.clearDirectory(outputPath)
   }
 
   "runFeatureSelectionPipeline" should "select the best features using the ChiSq method" in {
     val numFeatures = 2
-    FeatureSelectionPipeline.run(sparkSession, testData, outputFile, Constants.CHI_SQ, numFeatures)
+    FeatureSelectionPipeline.run(sparkSession, trainFile, testFile, outputPath, Constants.CHI_SQ, numFeatures)
 
-    val selectedData: DataFrame = DataService.getDataFromFile(sparkSession, outputFile)
+    val outputTrain: String = TestUtils.findFileByWildcard(outputPath, pattern = "train")
+    val selectedTrain: DataFrame = DataService.getDataFromFile(sparkSession, outputTrain)
+    assert(selectedTrain.columns.length == numFeatures + 1)
 
-    assert(selectedData.columns.length == numFeatures + 1)
+    val outputTest: String = TestUtils.findFileByWildcard(outputPath, pattern = "test")
+    val selectedTest: DataFrame = DataService.getDataFromFile(sparkSession, outputTest)
+    assert(selectedTest.columns.length == numFeatures + 1)
   }
 
   it should "select the best features using the mRMR" in {
     val numFeatures = 2
-    FeatureSelectionPipeline.run(sparkSession, testData, outputFile, Constants.MRMR, numFeatures)
+    FeatureSelectionPipeline.run(sparkSession, trainFile, testFile, outputPath, Constants.MRMR, numFeatures)
 
-    val selectedData: DataFrame = DataService.getDataFromFile(sparkSession, outputFile)
+    val outputTrain: String = TestUtils.findFileByWildcard(outputPath, pattern = "train")
+    val selectedTrain: DataFrame = DataService.getDataFromFile(sparkSession, outputTrain)
+    assert(selectedTrain.columns.length == numFeatures + 1)
 
-    assert(selectedData.columns.length == numFeatures + 1)
+    val outputTest: String = TestUtils.findFileByWildcard(outputPath, pattern = "test")
+    val selectedTest: DataFrame = DataService.getDataFromFile(sparkSession, outputTest)
+    assert(selectedTest.columns.length == numFeatures + 1)
   }
 }
