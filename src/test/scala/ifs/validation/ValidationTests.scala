@@ -77,4 +77,30 @@ class ValidationTests extends FlatSpec with Matchers with BeforeAndAfter {
     val modelFile: String = TestUtils.findFileByWildcard(modelsPath)
     assert(modelFile.nonEmpty)
   }
+
+  it should "perform the full pipeline (RELIEF Selection + Random Forest)" in {
+    val numFeatures = 3
+    val featureSelectionMethod = Constants.RELIEF
+    val classificationMethod = Constants.RANDOM_FOREST
+
+    FeatureSelectionPipeline.run(sparkSession, trainFile, testFile, featuresPath, featureSelectionMethod, numFeatures)
+
+    val outputTrain: String = TestUtils.findFileByWildcard(featuresPath)
+    val selectedTrain: DataFrame = DataService.load(sparkSession, outputTrain)
+    assert(selectedTrain.columns.length == numFeatures + 1)
+
+    val outputTest: String = TestUtils.findFileByWildcard(featuresPath)
+    val selectedTest: DataFrame = DataService.load(sparkSession, outputTest)
+    assert(selectedTest.columns.length == numFeatures + 1)
+
+    ClassificationPipeline.run(sparkSession, outputTrain, outputTest, metricsPath, modelsPath, classificationMethod)
+
+    val metricsFile: String = TestUtils.findFileByWildcard(metricsPath)
+    val metrics: DataFrame = DataService.load(sparkSession, metricsFile)
+    assert(metrics.columns.length == 1)
+    assert(metrics.count() == 1)
+
+    val modelFile: String = TestUtils.findFileByWildcard(modelsPath)
+    assert(modelFile.nonEmpty)
+  }
 }

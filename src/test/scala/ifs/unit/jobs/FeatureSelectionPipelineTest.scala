@@ -47,4 +47,17 @@ class FeatureSelectionPipelineTest extends FlatSpec with Matchers with BeforeAnd
     val selectedTest: DataFrame = DataService.load(sparkSession, outputTest)
     assert(selectedTest.columns.length == numFeatures + 1)
   }
+
+  it should "select the best features using the RELIEF" in {
+    val numFeatures = 2
+    FeatureSelectionPipeline.run(sparkSession, trainFile, testFile, outputPath, Constants.RELIEF, numFeatures)
+
+    val outputTrain: String = TestUtils.findFileByWildcard(outputPath, pattern = "train")
+    val selectedTrain: DataFrame = DataService.load(sparkSession, outputTrain)
+    assert(selectedTrain.columns.length == numFeatures + 1)
+
+    val outputTest: String = TestUtils.findFileByWildcard(outputPath, pattern = "test")
+    val selectedTest: DataFrame = DataService.load(sparkSession, outputTest)
+    assert(selectedTest.columns.length == numFeatures + 1)
+  }
 }

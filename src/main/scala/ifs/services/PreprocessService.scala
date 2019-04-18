@@ -1,31 +1,52 @@
 package ifs.services
 
-import org.apache.spark.ml.feature.{QuantileDiscretizer, StandardScaler, StringIndexer, VectorAssembler}
-import org.apache.spark.sql.DataFrame
+import ifs.services.ConfigurationService.Preprocess
+import org.apache.spark.ml.feature.{MinMaxScaler, StandardScaler, StringIndexer, VectorAssembler}
+import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
+import org.apache.spark.ml.linalg.{DenseVector, Vectors}
+import org.apache.spark.sql.types._
+import org.apache.spark.sql.{DataFrame, Row}
 
 object PreprocessService {
 
+  /**
+    * Preprocess the training and testing datasets by performing: label string indexing,
+    * features assembling and features standardizing.
+    *
+    * @param train    Training data set
+    * @param test     Testing data set
+    * @param label    Label output column
+    * @param features Features output column
+    * @return Array of preprocessed train and test DataFrames
+    */
   def preprocessData(train: DataFrame, test: DataFrame, label: String, features: String): Array[DataFrame] = {
-    val labelInput = train.columns.last
 
+    val labelInput = train.columns.last
     val Array(indexedTrain, indexedTest) = this.indexData(train, test, labelInput, label)
-    val Array(scaledTrain, scaledTest) = this.scaleFeatures(indexedTrain, indexedTest, label, features)
+    val Array(scaledTrain, scaledTest) = this.standardizeFeatures(indexedTrain, indexedTest, label, features)
 
     Array(scaledTrain, scaledTest)
   }
 
+  /**
+    * Preprocess the training and testing datasets by performing: label string indexing,
+    * features assembling, features min-max scaling and features discretization.
+    *
+    * @param train    Training data set
+    * @param test     Testing data set
+    * @param label    Label output column
+    * @param features Features output column
+    * @return Array of preprocessed train and test DataFrames
+    */
   def preprocessAndDiscretize(train: DataFrame, test: DataFrame, label: String, features: String): Array[DataFrame] = {
 
     val labelInput = train.columns.last
-
     val Array(indexedTrain, indexedTest) = this.indexData(train, test, labelInput, label)
-    val discretizedTrain = this.discretizeFeatures(indexedTrain)
-    val discretizedTest = this.discretizeFeatures(indexedTest)
 
-    val assembledTrain = this.assembleFeatures(discretizedTrain, label, features)
-    val assembledTest = this.assembleFeatures(discretizedTest, label, features)
+    val discretizedTrain = this.discretizeFeatures(indexedTrain, label, features)
+    val discretizedTest = this.discretizeFeatures(indexedTest, label, features)
 
-    Array(assembledTrain, assembledTest)
+    Array(discretizedTrain, discretizedTest)
   }
 
   private def indexData(train: DataFrame, test: DataFrame, inputCol: String, outputCol: String): Array[DataFrame] = {
@@ -41,25 +62,28 @@ object PreprocessService {
     Array(indexedTrain, indexedTest)
   }
 
-  private def discretizeFeatures(data: DataFrame): DataFrame = {
-    val features = data.columns.dropRight(1)
+  private def discretizeFeatures(data: DataFrame, label: String, featuresOutput: String,
+                                 assembledFeatures: String = "assembledFeatures",
+                                 scaledFeatures: String = "scaledFeatures",
+                                 numberOfBeans: Int = Preprocess.getNumberOfBeans): DataFrame = {
 
-    var discreteData: DataFrame = data
+    val assembledData = this.assembleFeatures(data, label, assembledFeatures)
+    val scaledData = this.scaleFeatures(assembledData, assembledFeatures, scaledFeatures)
 
-    features.foreach(feature => {
-      discreteData = this.discretizeColumn(discreteData, feature)
-    })
+    val discretized = scaledData.rdd.map(this.discretizeRow(_, label, scaledFeatures, numberOfBeans))
 
-    discreteData.drop(features: _*)
+    val schema = new StructType()
+      .add(StructField(label, DoubleType))
+      .add(StructField(featuresOutput, VectorType))
+
+    data.sparkSession.createDataFrame(discretized, schema)
   }
 
-  private def discretizeColumn(data: DataFrame, column: String): DataFrame = {
-    new QuantileDiscretizer()
-      .setInputCol(column)
-      .setOutputCol("discrete_" + column)
-      .setNumBuckets(10)
-      .fit(data)
-      .transform(data)
+  private def discretizeRow(row: Row, label: String, features: String, numberOfBeans: Int = 3): Row = {
+    val rowLabel = row.getAs[Double](label)
+    val rowFeatures = row.getAs[DenseVector](features).toArray.map(feature => (feature / numberOfBeans).floor)
+
+    Row(rowLabel, Vectors.dense(rowFeatures))
   }
 
   private def assembleFeatures(data: DataFrame, label: String, assembledFeatures: String): DataFrame = {
@@ -72,8 +96,19 @@ object PreprocessService {
     assembledData.drop(featuresInput: _*)
   }
 
-  private def scaleFeatures(train: DataFrame, test: DataFrame, label: String, featuresOutput: String,
-                            assembledFeatures: String = "assembledFeatures"): Array[DataFrame] = {
+  private def scaleFeatures(data: DataFrame, inputFeatures: String, outputFeatures: String): DataFrame = {
+    val scaler = new MinMaxScaler()
+      .setMin(Preprocess.getMinScaler)
+      .setMax(Preprocess.getMaxScaler)
+      .setInputCol(inputFeatures)
+      .setOutputCol(outputFeatures)
+      .fit(data)
+
+    scaler.transform(data).drop(inputFeatures)
+  }
+
+  private def standardizeFeatures(train: DataFrame, test: DataFrame, label: String, featuresOutput: String,
+                                  assembledFeatures: String = "assembledFeatures"): Array[DataFrame] = {
 
     val assembledTrain = this.assembleFeatures(train, label, assembledFeatures)
     val assembledTest = this.assembleFeatures(test, label, assembledFeatures)

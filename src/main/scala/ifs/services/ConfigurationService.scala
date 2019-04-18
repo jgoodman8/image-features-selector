@@ -15,10 +15,12 @@ object ConfigurationService {
     def getMetrics: Array[String] = Array("accuracy")
   }
 
-  object Data {
-    def getTrainSplitRatio: Double = configuration.getDouble("DataSplit.train")
+  object Preprocess {
+    def getNumberOfBeans: Int = configuration.getInt("Preprocess.beans")
 
-    def getTestSplitRatio: Double = configuration.getDouble("DataSplit.test")
+    def getMinScaler: Int = configuration.getInt("Preprocess.min")
+
+    def getMaxScaler: Int = configuration.getInt("Preprocess.max")
   }
 
   object Session {
