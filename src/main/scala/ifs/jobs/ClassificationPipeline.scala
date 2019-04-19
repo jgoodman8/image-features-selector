@@ -56,7 +56,7 @@ object ClassificationPipeline extends App with Logging {
 
   val Array(appName: String, trainFile: String, testFile: String, method: String) = args
 
-  val sparkSession: SparkSession = SparkSession.builder().appName(name = f"$appName%s_$method%s").getOrCreate()
+  val sparkSession: SparkSession = SparkSession.builder().appName(appName).getOrCreate()
 
   val metricsPath: String = ConfigurationService.Session.getMetricsPath
   val modelsPath: String = ConfigurationService.Session.getModelPath

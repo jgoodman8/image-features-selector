@@ -49,7 +49,7 @@ object FeatureSelectionPipeline extends App with Logging {
 
   val Array(appName: String, train: String, test: String, output: String, method: String, numFeatures: String) = args
 
-  val sparkSession = SparkSession.builder().appName(name = f"$appName%s_$method%s").getOrCreate()
+  val sparkSession = SparkSession.builder().appName(appName).getOrCreate()
 
   this.run(sparkSession, train, test, output, method, numFeatures.toInt)
 
