@@ -16,11 +16,33 @@ object ConfigurationService {
   }
 
   object Preprocess {
-    def getNumberOfBeans: Int = configuration.getInt("Preprocess.beans")
 
-    def getMinScaler: Int = configuration.getInt("Preprocess.min")
+    object Discretize {
+      def getNumberOfBeans: Int = configuration.getInt("Preprocess.discretize.beans")
+    }
 
-    def getMaxScaler: Int = configuration.getInt("Preprocess.max")
+    object Scale {
+      def getMinScaler: Int = configuration.getInt("Preprocess.scale.min")
+
+      def getMaxScaler: Int = configuration.getInt("Preprocess.scale.max")
+    }
+
+  }
+
+  object FeatureSelection {
+
+    object InfoTheoretic {
+      def getNumberOfPartitions: Int = configuration.getInt("FeatureSelection.infoTheoretic.partitions")
+    }
+
+    object Relief {
+      def getEstimationRatio: Double = configuration.getDouble("FeatureSelection.relief.estimationRatio")
+
+      def getNumberOfNeighbors: Int = configuration.getInt("FeatureSelection.relief.numNeighbors")
+
+      def isDiscreteData: Boolean = configuration.getBoolean("FeatureSelection.relief.discreteData")
+    }
+
   }
 
   object Session {

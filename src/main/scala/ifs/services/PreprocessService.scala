@@ -1,6 +1,7 @@
 package ifs.services
 
 import ifs.services.ConfigurationService.Preprocess
+import ifs.services.ConfigurationService.Preprocess.{Discretize, Scale}
 import org.apache.spark.ml.feature.{MinMaxScaler, StandardScaler, StringIndexer, VectorAssembler}
 import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 import org.apache.spark.ml.linalg.{DenseVector, Vectors}
@@ -65,7 +66,7 @@ object PreprocessService {
   private def discretizeFeatures(data: DataFrame, label: String, featuresOutput: String,
                                  assembledFeatures: String = "assembledFeatures",
                                  scaledFeatures: String = "scaledFeatures",
-                                 numberOfBeans: Int = Preprocess.getNumberOfBeans): DataFrame = {
+                                 numberOfBeans: Int = Discretize.getNumberOfBeans): DataFrame = {
 
     val assembledData = this.assembleFeatures(data, label, assembledFeatures)
     val scaledData = this.scaleFeatures(assembledData, assembledFeatures, scaledFeatures)
@@ -98,8 +99,8 @@ object PreprocessService {
 
   private def scaleFeatures(data: DataFrame, inputFeatures: String, outputFeatures: String): DataFrame = {
     val scaler = new MinMaxScaler()
-      .setMin(Preprocess.getMinScaler)
-      .setMax(Preprocess.getMaxScaler)
+      .setMin(Scale.getMinScaler)
+      .setMax(Scale.getMaxScaler)
       .setInputCol(inputFeatures)
       .setOutputCol(outputFeatures)
       .fit(data)

@@ -1,5 +1,6 @@
 package ifs.services
 
+import ifs.services.ConfigurationService.FeatureSelection
 import org.apache.spark.ml.Model
 import org.apache.spark.ml.feature.{ChiSqSelector, InfoThSelector, ReliefFRSelector}
 import org.apache.spark.sql.DataFrame
@@ -24,7 +25,7 @@ object FeatureSelectionService {
 
     val selector = new InfoThSelector()
       .setSelectCriterion(method)
-      .setNPartitions(100)
+      .setNPartitions(FeatureSelection.InfoTheoretic.getNumberOfPartitions)
       .setNumTopFeatures(numTopFeatures)
       .setFeaturesCol(features)
       .setLabelCol(label)
@@ -39,9 +40,9 @@ object FeatureSelectionService {
 
     val selector = new ReliefFRSelector()
       .setNumTopFeatures(numTopFeatures)
-      .setEstimationRatio(0.1)
-      .setNumNeighbors(5) // k-NN used in RELIEF
-      .setDiscreteData(true)
+      .setEstimationRatio(FeatureSelection.Relief.getEstimationRatio)
+      .setNumNeighbors(FeatureSelection.Relief.getNumberOfNeighbors) // k-NN used in RELIEF
+      .setDiscreteData(FeatureSelection.Relief.isDiscreteData)
       .setInputCol(features)
       .setLabelCol(label)
       .setOutputCol(selectedFeatures)
