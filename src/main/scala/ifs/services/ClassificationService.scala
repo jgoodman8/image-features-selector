@@ -2,10 +2,8 @@ package ifs.services
 
 import ifs.services.ConfigurationService.Model
 import org.apache.spark.ml.Model
-import org.apache.spark.sql.functions.max
 import org.apache.spark.ml.classification._
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
-import org.apache.spark.ml.linalg.DenseVector
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 
 object ClassificationService {
@@ -50,6 +48,13 @@ object ClassificationService {
       .setLayers(Array(inputLayerSize, outputLayerSize * 2, outputLayerSize))
       .setMaxIter(Model.MLP.getMaxIter)
       .setBlockSize(Model.MLP.getBlockSize)
+      .fit(data)
+  }
+
+  def fitWithNaiveBayes(data: DataFrame, label: String, features: String): NaiveBayesModel = {
+    new NaiveBayes()
+      .setLabelCol(label)
+      .setFeaturesCol(features)
       .fit(data)
   }
 

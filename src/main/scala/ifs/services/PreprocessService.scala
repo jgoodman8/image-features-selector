@@ -31,6 +31,31 @@ object PreprocessService {
 
   /**
     * Preprocess the training and testing datasets by performing: label string indexing,
+    * features assembling and features scaling.
+    *
+    * @param train    Training data set
+    * @param test     Testing data set
+    * @param label    Label output column
+    * @param features Features output column
+    * @return Array of preprocessed train and test DataFrames
+    */
+  def preprocessAndScaleData(train: DataFrame, test: DataFrame, label: String, features: String,
+                             assembledFeatures: String = "assembledFeatures"): Array[DataFrame] = {
+
+    val labelInput = train.columns.last
+    val Array(indexedTrain, indexedTest) = this.indexData(train, test, labelInput, label)
+
+    val assembledTrain = this.assembleFeatures(indexedTrain, label, assembledFeatures)
+    val scaledTrain = this.scaleFeatures(assembledTrain, assembledFeatures, features)
+
+    val assembledTest = this.assembleFeatures(indexedTest, label, assembledFeatures)
+    val scaledTest = this.scaleFeatures(assembledTest, assembledFeatures, features)
+
+    Array(scaledTrain, scaledTest)
+  }
+
+  /**
+    * Preprocess the training and testing datasets by performing: label string indexing,
     * features assembling, features min-max scaling and features discretization.
     *
     * @param train    Training data set

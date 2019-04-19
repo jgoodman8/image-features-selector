@@ -17,6 +17,7 @@ object FeatureSelectionPipeline extends App with Logging {
         .selectWithInfoTheoretic(train, test, features, labels, selectedFeatures, method, numFeatures)
       case RELIEF => FeatureSelectionService
         .selectWithRelief(train, test, features, labels, selectedFeatures, numFeatures)
+      case _ => throw new NoSuchMethodException("The feature selection method is not implemented")
     }
   }
 
@@ -26,6 +27,7 @@ object FeatureSelectionPipeline extends App with Logging {
       case CHI_SQ | RELIEF => PreprocessService.preprocessData(train, test, label, features)
       case MRMR | MIM | MIFS | JMI | ICAP | CMIM | IF => PreprocessService
         .preprocessAndDiscretize(train, test, label, features)
+      case _ => throw new NoSuchMethodException("The feature selection method is not implemented")
     }
   }
 

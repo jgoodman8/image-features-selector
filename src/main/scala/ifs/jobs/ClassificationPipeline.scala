@@ -1,6 +1,6 @@
 package ifs.jobs
 
-import ifs.Constants
+import ifs.Constants._
 import ifs.services.{ClassificationService, ConfigurationService, DataService, PreprocessService}
 import org.apache.spark.internal.Logging
 import org.apache.spark.ml.Model
@@ -11,10 +11,12 @@ object ClassificationPipeline extends App with Logging {
 
   def fit(data: DataFrame, label: String, features: String, method: String, modelPath: String): Model[_] = {
     val model = method match {
-      case Constants.LOGISTIC_REGRESSION => ClassificationService.fitWithLogisticRegression(data, label, features)
-      case Constants.RANDOM_FOREST => ClassificationService.fitWithRandomForest(data, label, features)
-      case Constants.DECISION_TREE => ClassificationService.fitWithDecisionTree(data, label, features)
-      case Constants.MLP => ClassificationService.fitWithMLP(data, label, features)
+      case LOGISTIC_REGRESSION => ClassificationService.fitWithLogisticRegression(data, label, features)
+      case RANDOM_FOREST => ClassificationService.fitWithRandomForest(data, label, features)
+      case DECISION_TREE => ClassificationService.fitWithDecisionTree(data, label, features)
+      case MLP => ClassificationService.fitWithMLP(data, label, features)
+      case NAIVE_BAYES => ClassificationService.fitWithNaiveBayes(data, label, features)
+      case _ => throw new NoSuchMethodException("The classifier method is not implemented")
     }
 
     model.write.save(modelPath + "/" + System.currentTimeMillis.toString)
@@ -29,13 +31,23 @@ object ClassificationPipeline extends App with Logging {
     ClassificationService.saveMetrics(session, metricNames, metricValues, metricsPath)
   }
 
+  def preprocess(train: DataFrame, test: DataFrame, label: String, features: String,
+                 method: String): Array[DataFrame] = {
+    method match {
+      case LOGISTIC_REGRESSION | RANDOM_FOREST | DECISION_TREE | MLP => PreprocessService
+        .preprocessData(train, test, label, features)
+      case NAIVE_BAYES => PreprocessService.preprocessAndScaleData(train, test, label, features)
+      case _ => throw new NoSuchMethodException("The classifier method is not implemented")
+    }
+  }
+
   def run(session: SparkSession, trainFile: String, testFile: String, metricsPath: String, modelPath: String,
           method: String, features: String = "features", label: String = "output_label"): Unit = {
 
     val train: DataFrame = DataService.load(session, trainFile)
     val test: DataFrame = DataService.load(session, testFile)
 
-    val Array(preprocessedTrain, preprocessedTest) = PreprocessService.preprocessData(train, test, label, features)
+    val Array(preprocessedTrain, preprocessedTest) = this.preprocess(train, test, label, features, method)
 
     val model = this.fit(preprocessedTrain, label, features, method, modelPath)
 
