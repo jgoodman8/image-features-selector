@@ -6,11 +6,20 @@ object ConfigurationService {
   val configuration: Config = ConfigFactory.load("application.conf")
 
   object Model {
-    def getMaxIter: Int = configuration.getInt("Model.maxIter")
 
-    def getElasticNetParam: Double = configuration.getDouble("Model.elasticNetParam")
+    object LogisticRegression {
+      def getMaxIter: Int = configuration.getInt("Model.logisticRegression.maxIter")
 
-    def getRegParam: Double = configuration.getDouble("Model.regParam")
+      def getElasticNetParam: Double = configuration.getDouble("Model.logisticRegression.elasticNetParam")
+
+      def getRegParam: Double = configuration.getDouble("Model.logisticRegression.regParam")
+    }
+
+    object MLP {
+      def getMaxIter: Int = configuration.getInt("Model.mlp.maxIter")
+
+      def getBlockSize: Int = configuration.getInt("Model.mlp.blockSize")
+    }
 
     def getMetrics: Array[String] = Array("accuracy")
   }

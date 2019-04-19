@@ -3,6 +3,8 @@ package ifs
 object Constants {
   val LOGISTIC_REGRESSION: String = "lr"
   val RANDOM_FOREST: String = "rf"
+  val DECISION_TREE: String = "tree"
+  val MLP: String = "mlp"
 
   val CHI_SQ: String  = "chisq" // Chi-squared
   val MRMR: String  = "mrmr" // Minimum Redundancy Maximum Relevance

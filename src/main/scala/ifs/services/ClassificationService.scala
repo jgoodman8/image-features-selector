@@ -1,8 +1,11 @@
 package ifs.services
 
+import ifs.services.ConfigurationService.Model
 import org.apache.spark.ml.Model
-import org.apache.spark.ml.classification.{LogisticRegression, OneVsRest, OneVsRestModel, RandomForestClassificationModel, RandomForestClassifier}
+import org.apache.spark.sql.functions.max
+import org.apache.spark.ml.classification._
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
+import org.apache.spark.ml.linalg.DenseVector
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 
 object ClassificationService {
@@ -10,9 +13,9 @@ object ClassificationService {
   def fitWithLogisticRegression(data: DataFrame, label: String, features: String): OneVsRestModel = {
 
     val logisticRegression = new LogisticRegression()
-      .setMaxIter(ConfigurationService.Model.getMaxIter)
-      .setElasticNetParam(ConfigurationService.Model.getElasticNetParam)
-      .setRegParam(ConfigurationService.Model.getRegParam)
+      .setMaxIter(Model.LogisticRegression.getMaxIter)
+      .setElasticNetParam(Model.LogisticRegression.getElasticNetParam)
+      .setRegParam(Model.LogisticRegression.getRegParam)
       .setFeaturesCol(features)
       .setLabelCol(label)
 
@@ -27,6 +30,26 @@ object ClassificationService {
     new RandomForestClassifier()
       .setLabelCol(label)
       .setFeaturesCol(features)
+      .fit(data)
+  }
+
+  def fitWithDecisionTree(data: DataFrame, label: String, features: String): DecisionTreeClassificationModel = {
+    new DecisionTreeClassifier()
+      .setLabelCol(label)
+      .setFeaturesCol(features)
+      .fit(data)
+  }
+
+  def fitWithMLP(data: DataFrame, label: String, features: String): MultilayerPerceptronClassificationModel = {
+    val inputLayerSize = DataService.getNumberOfFeatures(data, features)
+    val outputLayerSize = DataService.getNumberOfLabels(data, label)
+
+    new MultilayerPerceptronClassifier()
+      .setLabelCol(label)
+      .setFeaturesCol(features)
+      .setLayers(Array(inputLayerSize, outputLayerSize * 2, outputLayerSize))
+      .setMaxIter(Model.MLP.getMaxIter)
+      .setBlockSize(Model.MLP.getBlockSize)
       .fit(data)
   }
 

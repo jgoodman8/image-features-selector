@@ -13,6 +13,8 @@ object ClassificationPipeline extends App with Logging {
     val model = method match {
       case Constants.LOGISTIC_REGRESSION => ClassificationService.fitWithLogisticRegression(data, label, features)
       case Constants.RANDOM_FOREST => ClassificationService.fitWithRandomForest(data, label, features)
+      case Constants.DECISION_TREE => ClassificationService.fitWithDecisionTree(data, label, features)
+      case Constants.MLP => ClassificationService.fitWithMLP(data, label, features)
     }
 
     model.write.save(modelPath + "/" + System.currentTimeMillis.toString)

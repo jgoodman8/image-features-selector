@@ -1,7 +1,7 @@
 package ifs.services
 
-import org.apache.spark.ml.linalg.Vector
-import org.apache.spark.sql.functions.{col, udf}
+import org.apache.spark.ml.linalg.{DenseVector, Vector}
+import org.apache.spark.sql.functions.{col, max, udf}
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 
 object DataService {
@@ -33,4 +33,11 @@ object DataService {
       .select(columns: _*)
   }
 
+  def getNumberOfFeatures(data: DataFrame, features: String): Int = {
+    data.first().getAs[DenseVector](features).values.length
+  }
+
+  def getNumberOfLabels(data: DataFrame, label: String): Int = {
+    data.agg(max(label)).first().getAs[Double](0).toInt + 1
+  }
 }

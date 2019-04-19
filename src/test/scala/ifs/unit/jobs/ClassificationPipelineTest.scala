@@ -49,4 +49,30 @@ class ClassificationPipelineTest extends FlatSpec with Matchers with BeforeAndAf
     val modelFile: String = TestUtils.findFileByWildcard(modelsPath)
     assert(modelFile.nonEmpty)
   }
+
+  it should "classify the dataset using a decision tree" in {
+    val method = Constants.DECISION_TREE
+    ClassificationPipeline.run(sparkSession, trainFile, testFile, metricsPath, modelsPath, method)
+
+    val metricsFile: String = TestUtils.findFileByWildcard(metricsPath)
+    val metrics: DataFrame = DataService.load(sparkSession, metricsFile)
+    assert(metrics.columns.length == 1)
+    assert(metrics.count() == 1)
+
+    val modelFile: String = TestUtils.findFileByWildcard(modelsPath)
+    assert(modelFile.nonEmpty)
+  }
+
+  it should "classify the dataset using a multi layer perceptron" in {
+    val method = Constants.MLP
+    ClassificationPipeline.run(sparkSession, trainFile, testFile, metricsPath, modelsPath, method)
+
+    val metricsFile: String = TestUtils.findFileByWildcard(metricsPath)
+    val metrics: DataFrame = DataService.load(sparkSession, metricsFile)
+    assert(metrics.columns.length == 1)
+    assert(metrics.count() == 1)
+
+    val modelFile: String = TestUtils.findFileByWildcard(modelsPath)
+    assert(modelFile.nonEmpty)
+  }
 }
