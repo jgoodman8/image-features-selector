@@ -2,6 +2,7 @@ package ifs.services
 
 import ifs.services.ConfigurationService.Model
 import org.apache.spark.ml.Model
+import org.apache.spark.sql.functions.monotonically_increasing_id
 import org.apache.spark.ml.classification._
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
@@ -76,7 +77,15 @@ object ClassificationService {
                   outputFolder: String): Unit = {
     import session.implicits._
 
-    metricValues.toSeq.toDF(metricNames: _*)
+    val valuesColumn = metricNames.toList.toDF(colNames = "metric")
+      .withColumn(colName = "rowId1", monotonically_increasing_id())
+    val namesColumn = metricValues.toList.toDF(colNames = "value")
+      .withColumn(colName = "rowId2", monotonically_increasing_id())
+
+
+    valuesColumn
+      .join(namesColumn, valuesColumn("rowId1") === namesColumn("rowId2"))
+      .select("metric", "value")
       .write.mode(SaveMode.Overwrite)
       .option("header", "true")
       .csv(outputFolder + "/" + System.currentTimeMillis.toString)

@@ -1,6 +1,5 @@
 package ifs.services
 
-import ifs.services.ConfigurationService.Preprocess
 import ifs.services.ConfigurationService.Preprocess.{Discretize, Scale}
 import org.apache.spark.ml.feature.{MinMaxScaler, StandardScaler, StringIndexer, VectorAssembler}
 import org.apache.spark.ml.linalg.SQLDataTypes.VectorType

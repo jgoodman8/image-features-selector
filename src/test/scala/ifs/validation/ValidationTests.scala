@@ -1,7 +1,7 @@
 package ifs.validation
 
 import ifs.jobs.{ClassificationPipeline, FeatureSelectionPipeline}
-import ifs.services.DataService
+import ifs.services.{ConfigurationService, DataService}
 import ifs.{Constants, TestUtils}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
@@ -45,7 +45,7 @@ class ValidationTests extends FlatSpec with Matchers with BeforeAndAfter {
 
     val metricsFile: String = TestUtils.findFileByWildcard(metricsPath)
     val metrics: DataFrame = DataService.load(sparkSession, metricsFile)
-    assert(metrics.columns.length == 1)
+    assert(metrics.columns.length == ConfigurationService.Model.getMetrics.length)
     assert(metrics.count() == 1)
 
     val modelFile: String = TestUtils.findFileByWildcard(modelsPath)
@@ -71,7 +71,7 @@ class ValidationTests extends FlatSpec with Matchers with BeforeAndAfter {
 
     val metricsFile: String = TestUtils.findFileByWildcard(metricsPath)
     val metrics: DataFrame = DataService.load(sparkSession, metricsFile)
-    assert(metrics.columns.length == 1)
+    assert(metrics.columns.length == ConfigurationService.Model.getMetrics.length)
     assert(metrics.count() == 1)
 
     val modelFile: String = TestUtils.findFileByWildcard(modelsPath)
@@ -97,7 +97,7 @@ class ValidationTests extends FlatSpec with Matchers with BeforeAndAfter {
 
     val metricsFile: String = TestUtils.findFileByWildcard(metricsPath)
     val metrics: DataFrame = DataService.load(sparkSession, metricsFile)
-    assert(metrics.columns.length == 1)
+    assert(metrics.columns.length == ConfigurationService.Model.getMetrics.length)
     assert(metrics.count() == 1)
 
     val modelFile: String = TestUtils.findFileByWildcard(modelsPath)

@@ -20,14 +20,14 @@ class ClassificationServiceTest extends FlatSpec with Matchers with BeforeAndAft
   }
 
   "saveMetrics" should "create a csv file containing the given metrics" in {
-    val metricNames = Array("accuracy")
-    val metricValues = Array(0.1)
+    val metricNames = Array("accuracy", "f1")
+    val metricValues = Array(1.0, 1.0)
 
     ClassificationService.saveMetrics(sparkSession, metricNames, metricValues, metricsPath)
 
     val metricsFile: String = TestUtils.findFileByWildcard(metricsPath)
     val selectedTest: DataFrame = DataService.load(sparkSession, metricsFile)
-    assert(selectedTest.columns.length == 1)
-    assert(selectedTest.count() == 1)
+    assert(selectedTest.columns.length == 2)
+    assert(selectedTest.count() == metricNames.length)
   }
 }

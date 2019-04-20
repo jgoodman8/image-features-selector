@@ -21,7 +21,7 @@ object ConfigurationService {
       def getBlockSize: Int = configuration.getInt("Model.mlp.blockSize")
     }
 
-    def getMetrics: Array[String] = Array("accuracy")
+    def getMetrics: Array[String] = Array("accuracy", "f1")
   }
 
   object Preprocess {

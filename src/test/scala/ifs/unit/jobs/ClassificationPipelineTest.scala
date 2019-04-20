@@ -1,7 +1,7 @@
 package ifs.unit.jobs
 
 import ifs.jobs.ClassificationPipeline
-import ifs.services.DataService
+import ifs.services.{ConfigurationService, DataService}
 import ifs.{Constants, TestUtils}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
@@ -29,9 +29,9 @@ class ClassificationPipelineTest extends FlatSpec with Matchers with BeforeAndAf
     ClassificationPipeline.run(sparkSession, trainFile, testFile, metricsPath, modelsPath, method)
 
     val metricsFile: String = TestUtils.findFileByWildcard(metricsPath)
-    val selectedTest: DataFrame = DataService.load(sparkSession, metricsFile)
-    assert(selectedTest.columns.length == 1)
-    assert(selectedTest.count() == 1)
+    val metrics: DataFrame = DataService.load(sparkSession, metricsFile)
+    assert(metrics.columns.length == 2)
+    assert(metrics.count() == ConfigurationService.Model.getMetrics.length)
 
     val modelFile: String = TestUtils.findFileByWildcard(modelsPath)
     assert(modelFile.nonEmpty)
@@ -43,8 +43,8 @@ class ClassificationPipelineTest extends FlatSpec with Matchers with BeforeAndAf
 
     val metricsFile: String = TestUtils.findFileByWildcard(metricsPath)
     val metrics: DataFrame = DataService.load(sparkSession, metricsFile)
-    assert(metrics.columns.length == 1)
-    assert(metrics.count() == 1)
+    assert(metrics.columns.length == 2)
+    assert(metrics.count() == ConfigurationService.Model.getMetrics.length)
 
     val modelFile: String = TestUtils.findFileByWildcard(modelsPath)
     assert(modelFile.nonEmpty)
@@ -56,8 +56,8 @@ class ClassificationPipelineTest extends FlatSpec with Matchers with BeforeAndAf
 
     val metricsFile: String = TestUtils.findFileByWildcard(metricsPath)
     val metrics: DataFrame = DataService.load(sparkSession, metricsFile)
-    assert(metrics.columns.length == 1)
-    assert(metrics.count() == 1)
+    assert(metrics.columns.length == 2)
+    assert(metrics.count() == ConfigurationService.Model.getMetrics.length)
 
     val modelFile: String = TestUtils.findFileByWildcard(modelsPath)
     assert(modelFile.nonEmpty)
@@ -69,8 +69,8 @@ class ClassificationPipelineTest extends FlatSpec with Matchers with BeforeAndAf
 
     val metricsFile: String = TestUtils.findFileByWildcard(metricsPath)
     val metrics: DataFrame = DataService.load(sparkSession, metricsFile)
-    assert(metrics.columns.length == 1)
-    assert(metrics.count() == 1)
+    assert(metrics.columns.length == 2)
+    assert(metrics.count() == ConfigurationService.Model.getMetrics.length)
 
     val modelFile: String = TestUtils.findFileByWildcard(modelsPath)
     assert(modelFile.nonEmpty)
@@ -82,8 +82,8 @@ class ClassificationPipelineTest extends FlatSpec with Matchers with BeforeAndAf
 
     val metricsFile: String = TestUtils.findFileByWildcard(metricsPath)
     val metrics: DataFrame = DataService.load(sparkSession, metricsFile)
-    assert(metrics.columns.length == 1)
-    assert(metrics.count() == 1)
+    assert(metrics.columns.length == 2)
+    assert(metrics.count() == ConfigurationService.Model.getMetrics.length)
 
     val modelFile: String = TestUtils.findFileByWildcard(modelsPath)
     assert(modelFile.nonEmpty)
