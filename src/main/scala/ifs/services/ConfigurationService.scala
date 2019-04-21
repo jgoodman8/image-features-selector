@@ -7,6 +7,10 @@ object ConfigurationService {
 
   object Model {
 
+    def getNumFolds: Int = configuration.getInt("Model.numFolds")
+
+    def isGridSearchActivated: Boolean = configuration.getBoolean("Model.gridSearch")
+
     object LogisticRegression {
       def getMaxIter: Int = configuration.getInt("Model.logisticRegression.maxIter")
 

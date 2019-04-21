@@ -43,13 +43,9 @@ class ValidationTests extends FlatSpec with Matchers with BeforeAndAfter {
 
     ClassificationPipeline.run(sparkSession, outputTrain, outputTest, metricsPath, modelsPath, classificationMethod)
 
-    val metricsFile: String = TestUtils.findFileByPattern(metricsPath)
-    val metrics: DataFrame = DataService.load(sparkSession, metricsFile)
-    assert(metrics.columns.length == ConfigurationService.Model.getMetrics.length)
-    assert(metrics.count() == 1)
-
-    val modelFile: String = TestUtils.findFileByPattern(modelsPath)
-    assert(modelFile.nonEmpty)
+    checkMetricsFile(filePattern = "train")
+    checkMetricsFile(filePattern = "test")
+    checkModelPath()
   }
 
   it should "perform the full pipeline (mRMR Selection + Random Forest)" in {
@@ -69,13 +65,9 @@ class ValidationTests extends FlatSpec with Matchers with BeforeAndAfter {
 
     ClassificationPipeline.run(sparkSession, outputTrain, outputTest, metricsPath, modelsPath, classificationMethod)
 
-    val metricsFile: String = TestUtils.findFileByPattern(metricsPath)
-    val metrics: DataFrame = DataService.load(sparkSession, metricsFile)
-    assert(metrics.columns.length == ConfigurationService.Model.getMetrics.length)
-    assert(metrics.count() == 1)
-
-    val modelFile: String = TestUtils.findFileByPattern(modelsPath)
-    assert(modelFile.nonEmpty)
+    checkMetricsFile(filePattern = "train")
+    checkMetricsFile(filePattern = "test")
+    checkModelPath()
   }
 
   it should "perform the full pipeline (RELIEF Selection + Random Forest)" in {
@@ -95,11 +87,19 @@ class ValidationTests extends FlatSpec with Matchers with BeforeAndAfter {
 
     ClassificationPipeline.run(sparkSession, outputTrain, outputTest, metricsPath, modelsPath, classificationMethod)
 
-    val metricsFile: String = TestUtils.findFileByPattern(metricsPath)
-    val metrics: DataFrame = DataService.load(sparkSession, metricsFile)
-    assert(metrics.columns.length == ConfigurationService.Model.getMetrics.length)
-    assert(metrics.count() == 1)
+    checkMetricsFile(filePattern = "train")
+    checkMetricsFile(filePattern = "test")
+    checkModelPath()
+  }
 
+  def checkMetricsFile(filePattern: String): Unit = {
+    val metricsFile: String = TestUtils.findFileByPattern(metricsPath, filePattern)
+    val metrics: DataFrame = DataService.load(sparkSession, metricsFile)
+    assert(metrics.columns.length == 2)
+    assert(metrics.count() == ConfigurationService.Model.getMetrics.length)
+  }
+
+  def checkModelPath(): Unit = {
     val modelFile: String = TestUtils.findFileByPattern(modelsPath)
     assert(modelFile.nonEmpty)
   }
