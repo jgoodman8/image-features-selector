@@ -88,6 +88,6 @@ object ClassificationService {
       .select("metric", "value")
       .write.mode(SaveMode.Overwrite)
       .option("header", "true")
-      .csv(outputFolder + "/" + System.currentTimeMillis.toString)
+      .csv(outputFolder + System.currentTimeMillis.toString)
   }
 }

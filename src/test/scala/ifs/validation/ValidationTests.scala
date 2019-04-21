@@ -33,22 +33,22 @@ class ValidationTests extends FlatSpec with Matchers with BeforeAndAfter {
 
     FeatureSelectionPipeline.run(sparkSession, trainFile, testFile, featuresPath, featureSelectionMethod, numFeatures)
 
-    val outputTrain: String = TestUtils.findFileByWildcard(featuresPath, pattern = "train")
+    val outputTrain: String = TestUtils.findFileByPattern(featuresPath, pattern = "train")
     val selectedTrain: DataFrame = DataService.load(sparkSession, outputTrain)
     assert(selectedTrain.columns.length == numFeatures + 1)
 
-    val outputTest: String = TestUtils.findFileByWildcard(featuresPath, pattern = "test")
+    val outputTest: String = TestUtils.findFileByPattern(featuresPath, pattern = "test")
     val selectedTest: DataFrame = DataService.load(sparkSession, outputTest)
     assert(selectedTest.columns.length == numFeatures + 1)
 
     ClassificationPipeline.run(sparkSession, outputTrain, outputTest, metricsPath, modelsPath, classificationMethod)
 
-    val metricsFile: String = TestUtils.findFileByWildcard(metricsPath)
+    val metricsFile: String = TestUtils.findFileByPattern(metricsPath)
     val metrics: DataFrame = DataService.load(sparkSession, metricsFile)
     assert(metrics.columns.length == ConfigurationService.Model.getMetrics.length)
     assert(metrics.count() == 1)
 
-    val modelFile: String = TestUtils.findFileByWildcard(modelsPath)
+    val modelFile: String = TestUtils.findFileByPattern(modelsPath)
     assert(modelFile.nonEmpty)
   }
 
@@ -59,22 +59,22 @@ class ValidationTests extends FlatSpec with Matchers with BeforeAndAfter {
 
     FeatureSelectionPipeline.run(sparkSession, trainFile, testFile, featuresPath, featureSelectionMethod, numFeatures)
 
-    val outputTrain: String = TestUtils.findFileByWildcard(featuresPath)
+    val outputTrain: String = TestUtils.findFileByPattern(featuresPath)
     val selectedTrain: DataFrame = DataService.load(sparkSession, outputTrain)
     assert(selectedTrain.columns.length == numFeatures + 1)
 
-    val outputTest: String = TestUtils.findFileByWildcard(featuresPath)
+    val outputTest: String = TestUtils.findFileByPattern(featuresPath)
     val selectedTest: DataFrame = DataService.load(sparkSession, outputTest)
     assert(selectedTest.columns.length == numFeatures + 1)
 
     ClassificationPipeline.run(sparkSession, outputTrain, outputTest, metricsPath, modelsPath, classificationMethod)
 
-    val metricsFile: String = TestUtils.findFileByWildcard(metricsPath)
+    val metricsFile: String = TestUtils.findFileByPattern(metricsPath)
     val metrics: DataFrame = DataService.load(sparkSession, metricsFile)
     assert(metrics.columns.length == ConfigurationService.Model.getMetrics.length)
     assert(metrics.count() == 1)
 
-    val modelFile: String = TestUtils.findFileByWildcard(modelsPath)
+    val modelFile: String = TestUtils.findFileByPattern(modelsPath)
     assert(modelFile.nonEmpty)
   }
 
@@ -85,22 +85,22 @@ class ValidationTests extends FlatSpec with Matchers with BeforeAndAfter {
 
     FeatureSelectionPipeline.run(sparkSession, trainFile, testFile, featuresPath, featureSelectionMethod, numFeatures)
 
-    val outputTrain: String = TestUtils.findFileByWildcard(featuresPath)
+    val outputTrain: String = TestUtils.findFileByPattern(featuresPath)
     val selectedTrain: DataFrame = DataService.load(sparkSession, outputTrain)
     assert(selectedTrain.columns.length == numFeatures + 1)
 
-    val outputTest: String = TestUtils.findFileByWildcard(featuresPath)
+    val outputTest: String = TestUtils.findFileByPattern(featuresPath)
     val selectedTest: DataFrame = DataService.load(sparkSession, outputTest)
     assert(selectedTest.columns.length == numFeatures + 1)
 
     ClassificationPipeline.run(sparkSession, outputTrain, outputTest, metricsPath, modelsPath, classificationMethod)
 
-    val metricsFile: String = TestUtils.findFileByWildcard(metricsPath)
+    val metricsFile: String = TestUtils.findFileByPattern(metricsPath)
     val metrics: DataFrame = DataService.load(sparkSession, metricsFile)
     assert(metrics.columns.length == ConfigurationService.Model.getMetrics.length)
     assert(metrics.count() == 1)
 
-    val modelFile: String = TestUtils.findFileByWildcard(modelsPath)
+    val modelFile: String = TestUtils.findFileByPattern(modelsPath)
     assert(modelFile.nonEmpty)
   }
 }

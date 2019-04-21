@@ -28,64 +28,56 @@ class ClassificationPipelineTest extends FlatSpec with Matchers with BeforeAndAf
     val method = Constants.LOGISTIC_REGRESSION
     ClassificationPipeline.run(sparkSession, trainFile, testFile, metricsPath, modelsPath, method)
 
-    val metricsFile: String = TestUtils.findFileByWildcard(metricsPath)
-    val metrics: DataFrame = DataService.load(sparkSession, metricsFile)
-    assert(metrics.columns.length == 2)
-    assert(metrics.count() == ConfigurationService.Model.getMetrics.length)
-
-    val modelFile: String = TestUtils.findFileByWildcard(modelsPath)
-    assert(modelFile.nonEmpty)
+    checkMetricsFile(filePattern = "train")
+    checkMetricsFile(filePattern = "test")
+    checkModelPath()
   }
 
   it should "classify the dataset using a Random Forest model" in {
     val method = Constants.RANDOM_FOREST
     ClassificationPipeline.run(sparkSession, trainFile, testFile, metricsPath, modelsPath, method)
 
-    val metricsFile: String = TestUtils.findFileByWildcard(metricsPath)
-    val metrics: DataFrame = DataService.load(sparkSession, metricsFile)
-    assert(metrics.columns.length == 2)
-    assert(metrics.count() == ConfigurationService.Model.getMetrics.length)
-
-    val modelFile: String = TestUtils.findFileByWildcard(modelsPath)
-    assert(modelFile.nonEmpty)
+    checkMetricsFile(filePattern = "train")
+    checkMetricsFile(filePattern = "test")
+    checkModelPath()
   }
 
   it should "classify the dataset using a Decision Tree Classifier" in {
     val method = Constants.DECISION_TREE
     ClassificationPipeline.run(sparkSession, trainFile, testFile, metricsPath, modelsPath, method)
 
-    val metricsFile: String = TestUtils.findFileByWildcard(metricsPath)
-    val metrics: DataFrame = DataService.load(sparkSession, metricsFile)
-    assert(metrics.columns.length == 2)
-    assert(metrics.count() == ConfigurationService.Model.getMetrics.length)
-
-    val modelFile: String = TestUtils.findFileByWildcard(modelsPath)
-    assert(modelFile.nonEmpty)
+    checkMetricsFile(filePattern = "train")
+    checkMetricsFile(filePattern = "test")
+    checkModelPath()
   }
 
   it should "classify the dataset using a MultiLayer Perceptron" in {
     val method = Constants.MLP
     ClassificationPipeline.run(sparkSession, trainFile, testFile, metricsPath, modelsPath, method)
 
-    val metricsFile: String = TestUtils.findFileByWildcard(metricsPath)
-    val metrics: DataFrame = DataService.load(sparkSession, metricsFile)
-    assert(metrics.columns.length == 2)
-    assert(metrics.count() == ConfigurationService.Model.getMetrics.length)
-
-    val modelFile: String = TestUtils.findFileByWildcard(modelsPath)
-    assert(modelFile.nonEmpty)
+    checkMetricsFile(filePattern = "train")
+    checkMetricsFile(filePattern = "test")
+    checkModelPath()
   }
 
   it should "classify the dataset using a Naive Bayes Classifier" in {
     val method = Constants.NAIVE_BAYES
     ClassificationPipeline.run(sparkSession, trainFile, testFile, metricsPath, modelsPath, method)
 
-    val metricsFile: String = TestUtils.findFileByWildcard(metricsPath)
+    checkMetricsFile(filePattern = "train")
+    checkMetricsFile(filePattern = "test")
+    checkModelPath()
+  }
+
+  def checkMetricsFile(filePattern: String): Unit = {
+    val metricsFile: String = TestUtils.findFileByPattern(metricsPath, filePattern)
     val metrics: DataFrame = DataService.load(sparkSession, metricsFile)
     assert(metrics.columns.length == 2)
     assert(metrics.count() == ConfigurationService.Model.getMetrics.length)
+  }
 
-    val modelFile: String = TestUtils.findFileByWildcard(modelsPath)
+  def checkModelPath(): Unit = {
+    val modelFile: String = TestUtils.findFileByPattern(modelsPath)
     assert(modelFile.nonEmpty)
   }
 }

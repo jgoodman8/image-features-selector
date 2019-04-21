@@ -26,11 +26,11 @@ class FeatureSelectionPipelineTest extends FlatSpec with Matchers with BeforeAnd
     val numFeatures = 2
     FeatureSelectionPipeline.run(sparkSession, trainFile, testFile, outputPath, Constants.CHI_SQ, numFeatures)
 
-    val outputTrain: String = TestUtils.findFileByWildcard(outputPath, pattern = "train")
+    val outputTrain: String = TestUtils.findFileByPattern(outputPath, pattern = "train")
     val selectedTrain: DataFrame = DataService.load(sparkSession, outputTrain)
     assert(selectedTrain.columns.length == numFeatures + 1)
 
-    val outputTest: String = TestUtils.findFileByWildcard(outputPath, pattern = "test")
+    val outputTest: String = TestUtils.findFileByPattern(outputPath, pattern = "test")
     val selectedTest: DataFrame = DataService.load(sparkSession, outputTest)
     assert(selectedTest.columns.length == numFeatures + 1)
   }
@@ -39,11 +39,11 @@ class FeatureSelectionPipelineTest extends FlatSpec with Matchers with BeforeAnd
     val numFeatures = 2
     FeatureSelectionPipeline.run(sparkSession, trainFile, testFile, outputPath, Constants.MRMR, numFeatures)
 
-    val outputTrain: String = TestUtils.findFileByWildcard(outputPath, pattern = "train")
+    val outputTrain: String = TestUtils.findFileByPattern(outputPath, pattern = "train")
     val selectedTrain: DataFrame = DataService.load(sparkSession, outputTrain)
     assert(selectedTrain.columns.length == numFeatures + 1)
 
-    val outputTest: String = TestUtils.findFileByWildcard(outputPath, pattern = "test")
+    val outputTest: String = TestUtils.findFileByPattern(outputPath, pattern = "test")
     val selectedTest: DataFrame = DataService.load(sparkSession, outputTest)
     assert(selectedTest.columns.length == numFeatures + 1)
   }
@@ -52,11 +52,11 @@ class FeatureSelectionPipelineTest extends FlatSpec with Matchers with BeforeAnd
     val numFeatures = 2
     FeatureSelectionPipeline.run(sparkSession, trainFile, testFile, outputPath, Constants.RELIEF, numFeatures)
 
-    val outputTrain: String = TestUtils.findFileByWildcard(outputPath, pattern = "train")
+    val outputTrain: String = TestUtils.findFileByPattern(outputPath, pattern = "train")
     val selectedTrain: DataFrame = DataService.load(sparkSession, outputTrain)
     assert(selectedTrain.columns.length == numFeatures + 1)
 
-    val outputTest: String = TestUtils.findFileByWildcard(outputPath, pattern = "test")
+    val outputTest: String = TestUtils.findFileByPattern(outputPath, pattern = "test")
     val selectedTest: DataFrame = DataService.load(sparkSession, outputTest)
     assert(selectedTest.columns.length == numFeatures + 1)
   }

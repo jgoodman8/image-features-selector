@@ -24,11 +24,15 @@ object ClassificationPipeline extends App with Logging {
     model
   }
 
-  def evaluate(session: SparkSession, model: Model[_], test: DataFrame, label: String, metricsPath: String): Unit = {
-    val metricNames: Array[String] = ConfigurationService.Model.getMetrics
-    val metricValues: Array[Double] = ClassificationService.evaluate(model, test, label, metricNames)
+  def evaluate(session: SparkSession, model: Model[_], train: DataFrame, test: DataFrame, label: String,
+               metricsPath: String): Unit = {
 
-    ClassificationService.saveMetrics(session, metricNames, metricValues, metricsPath)
+    val metricNames: Array[String] = ConfigurationService.Model.getMetrics
+    val trainMetricValues: Array[Double] = ClassificationService.evaluate(model, train, label, metricNames)
+    val testMetricValues: Array[Double] = ClassificationService.evaluate(model, test, label, metricNames)
+
+    ClassificationService.saveMetrics(session, metricNames, trainMetricValues, metricsPath + "/train_eval_")
+    ClassificationService.saveMetrics(session, metricNames, testMetricValues, metricsPath + "/test_eval_")
   }
 
   def preprocess(train: DataFrame, test: DataFrame, label: String, features: String,
@@ -51,7 +55,7 @@ object ClassificationPipeline extends App with Logging {
 
     val model = this.fit(preprocessedTrain, label, features, method, modelPath)
 
-    this.evaluate(session, model, preprocessedTest, label, metricsPath)
+    this.evaluate(session, model, preprocessedTrain, preprocessedTest, label, metricsPath)
   }
 
   val Array(appName: String, trainFile: String, testFile: String, method: String) = args

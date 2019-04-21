@@ -29,7 +29,7 @@ object TestUtils {
 
   def clearDirectory(path: String): Unit = new Directory(new File(path)).deleteRecursively()
 
-  def findFileByWildcard(basePath: String, pattern: String = ""): String = {
+  def findFileByPattern(basePath: String, pattern: String = ""): String = {
     val fileName = new File(basePath).listFiles()
       .filter(file => file.isDirectory)
       .map(file => file.getName)

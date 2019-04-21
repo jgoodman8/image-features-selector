@@ -25,7 +25,7 @@ class ClassificationServiceTest extends FlatSpec with Matchers with BeforeAndAft
 
     ClassificationService.saveMetrics(sparkSession, metricNames, metricValues, metricsPath)
 
-    val metricsFile: String = TestUtils.findFileByWildcard(metricsPath)
+    val metricsFile: String = TestUtils.findFileByPattern(metricsPath)
     val selectedTest: DataFrame = DataService.load(sparkSession, metricsFile)
     assert(selectedTest.columns.length == 2)
     assert(selectedTest.count() == metricNames.length)
