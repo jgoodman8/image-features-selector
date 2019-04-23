@@ -2,3 +2,4 @@ target
 project/target
 .idea/
 /output
+src/main/resources/application.conf
