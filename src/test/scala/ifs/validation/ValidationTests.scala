@@ -92,6 +92,28 @@ class ValidationTests extends FlatSpec with Matchers with BeforeAndAfter {
     checkModelPath()
   }
 
+  it should "perform the full pipeline (RELIEF Selection + Naive Bayes)" in {
+    val numFeatures = 3
+    val featureSelectionMethod = Constants.RELIEF
+    val classificationMethod = Constants.NAIVE_BAYES
+
+    FeatureSelectionPipeline.run(sparkSession, trainFile, testFile, featuresPath, featureSelectionMethod, numFeatures)
+
+    val outputTrain: String = TestUtils.findFileByPattern(featuresPath)
+    val selectedTrain: DataFrame = DataService.load(sparkSession, outputTrain)
+    assert(selectedTrain.columns.length == numFeatures + 1)
+
+    val outputTest: String = TestUtils.findFileByPattern(featuresPath)
+    val selectedTest: DataFrame = DataService.load(sparkSession, outputTest)
+    assert(selectedTest.columns.length == numFeatures + 1)
+
+    ClassificationPipeline.run(sparkSession, outputTrain, outputTest, metricsPath, modelsPath, classificationMethod)
+
+    checkMetricsFile(filePattern = "train")
+    checkMetricsFile(filePattern = "test")
+    checkModelPath()
+  }
+
   def checkMetricsFile(filePattern: String): Unit = {
     val metricsFile: String = TestUtils.findFileByPattern(metricsPath, filePattern)
     val metrics: DataFrame = DataService.load(sparkSession, metricsFile)

@@ -3,7 +3,7 @@ name := "images-features-selection"
 version := "0.1"
 
 scalaVersion := "2.11.8"
-val sparkVersion = "2.2.2"
+val sparkVersion = "2.4.2"
 
 resolvers += "Spark Packages Repo" at "http://dl.bintray.com/spark-packages/maven"
 
