@@ -9,6 +9,8 @@ import org.apache.spark.ml.param.ParamMap
 import org.apache.spark.ml.tuning.{CrossValidator, ParamGridBuilder}
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 
+import scala.reflect.ClassTag
+
 object ClassificationService {
 
   def fitWithLogisticRegression(data: DataFrame, label: String, features: String): OneVsRestModel = {
@@ -88,7 +90,7 @@ object ClassificationService {
   }
 
   def crossValidate[T](data: DataFrame, label: String, features: String, classifier: Estimator[_],
-                       params: Array[ParamMap]): T = {
+                                 params: Array[ParamMap])(implicit tag: ClassTag[T]): T = {
 
     val crossValidator = new CrossValidator()
       .setEstimator(classifier)

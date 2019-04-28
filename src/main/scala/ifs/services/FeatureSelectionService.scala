@@ -2,7 +2,7 @@ package ifs.services
 
 import ifs.services.ConfigurationService.FeatureSelection
 import org.apache.spark.ml.Model
-import org.apache.spark.ml.feature.{ChiSqSelector, InfoThSelector, ReliefFRSelector}
+import org.apache.spark.ml.feature.{ChiSqSelector, InfoThSelector, PCA, ReliefFRSelector}
 import org.apache.spark.sql.DataFrame
 
 object FeatureSelectionService {
@@ -15,7 +15,7 @@ object FeatureSelectionService {
       .setFeaturesCol(features)
       .setLabelCol(label)
       .setOutputCol(selectedFeatures)
-      .fit(train)
+      .fit(train.union(test))
 
     this.transform(selector, train, test, features, label, selectedFeatures)
   }
@@ -30,7 +30,7 @@ object FeatureSelectionService {
       .setFeaturesCol(features)
       .setLabelCol(label)
       .setOutputCol(selectedFeatures)
-      .fit(train)
+      .fit(train.union(test))
 
     this.transform(selector, train, test, features, label, selectedFeatures)
   }
@@ -46,7 +46,19 @@ object FeatureSelectionService {
       .setInputCol(features)
       .setLabelCol(label)
       .setOutputCol(selectedFeatures)
-      .fit(train)
+      .fit(train.union(test))
+
+    this.transform(selector, train, test, features, label, selectedFeatures)
+  }
+
+  def selectWithPCA(train: DataFrame, test: DataFrame, features: String, label: String, selectedFeatures: String,
+                    numTopFeatures: Int = 10): Array[DataFrame] = {
+
+    val selector = new PCA()
+      .setInputCol(features)
+      .setOutputCol(selectedFeatures)
+      .setK(numTopFeatures)
+      .fit(train.union(test))
 
     this.transform(selector, train, test, features, label, selectedFeatures)
   }

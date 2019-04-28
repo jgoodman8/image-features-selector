@@ -16,4 +16,5 @@ object Constants {
   val CMIM: String = "cmim" // Conditional Mutual Information Maximization
   val IF: String = "if" // Informative Fragments
   val RELIEF: String = "relief" // RELIEF-F
+  val PCA: String = "pca" // Principal Component Analysis
 }

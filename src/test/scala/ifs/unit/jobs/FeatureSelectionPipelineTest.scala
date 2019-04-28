@@ -60,4 +60,17 @@ class FeatureSelectionPipelineTest extends FlatSpec with Matchers with BeforeAnd
     val selectedTest: DataFrame = DataService.load(sparkSession, outputTest)
     assert(selectedTest.columns.length == numFeatures + 1)
   }
+
+  it should "select the best features using the PCA method" in {
+    val numFeatures = 2
+    FeatureSelectionPipeline.run(sparkSession, trainFile, testFile, outputPath, Constants.PCA, numFeatures)
+
+    val outputTrain: String = TestUtils.findFileByPattern(outputPath, pattern = "train")
+    val selectedTrain: DataFrame = DataService.load(sparkSession, outputTrain)
+    assert(selectedTrain.columns.length == numFeatures + 1)
+
+    val outputTest: String = TestUtils.findFileByPattern(outputPath, pattern = "test")
+    val selectedTest: DataFrame = DataService.load(sparkSession, outputTest)
+    assert(selectedTest.columns.length == numFeatures + 1)
+  }
 }
