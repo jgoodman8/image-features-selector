@@ -30,10 +30,17 @@ object ClassificationService {
   }
 
   def fitWithRandomForest(data: DataFrame, label: String, features: String): RandomForestClassificationModel = {
-    new RandomForestClassifier()
+    val rf = new RandomForestClassifier()
       .setLabelCol(label)
       .setFeaturesCol(features)
-      .fit(data)
+      .setNumTrees(Model.RandomForest.getNumTrees)
+      .setSubsamplingRate(Model.RandomForest.getSubsamplingRate)
+
+    if (Model.RandomForest.hasMaxDepth) {
+      rf.setMaxDepth(Model.RandomForest.getMaxDepth)
+    }
+
+    rf.fit(data)
   }
 
   def fitWithDecisionTree(data: DataFrame, label: String, features: String): DecisionTreeClassificationModel = {
@@ -90,7 +97,7 @@ object ClassificationService {
   }
 
   def crossValidate[T](data: DataFrame, label: String, features: String, classifier: Estimator[_],
-                                 params: Array[ParamMap])(implicit tag: ClassTag[T]): T = {
+                       params: Array[ParamMap])(implicit tag: ClassTag[T]): T = {
 
     val crossValidator = new CrossValidator()
       .setEstimator(classifier)

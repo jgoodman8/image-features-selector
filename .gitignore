@@ -3,3 +3,4 @@ project/target
 .idea/
 /output
 src/main/resources/application.conf
+data/tiny-imagenet-features

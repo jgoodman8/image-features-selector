@@ -2,7 +2,8 @@ package ifs.unit.jobs
 
 import ifs.jobs.ClassificationPipeline
 import ifs.services.{ConfigurationService, DataService}
-import ifs.{Constants, TestUtils}
+import ifs.TestUtils
+import ifs.Constants.Classifiers
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
@@ -21,11 +22,11 @@ class ClassificationPipelineTest extends FlatSpec with Matchers with BeforeAndAf
   after {
     sparkSession.stop()
     TestUtils.clearDirectory(modelsPath)
-    TestUtils.clearDirectory(metricsPath)
+    //    TestUtils.clearDirectory(metricsPath)
   }
 
   "trainPipeline" should "classify the dataset using a Logistic Regression model" in {
-    val method = Constants.LOGISTIC_REGRESSION
+    val method = Classifiers.LOGISTIC_REGRESSION
     ClassificationPipeline.run(sparkSession, trainFile, testFile, metricsPath, modelsPath, method)
 
     checkMetricsFile(filePattern = "train")
@@ -34,7 +35,7 @@ class ClassificationPipelineTest extends FlatSpec with Matchers with BeforeAndAf
   }
 
   it should "classify the dataset using a Random Forest model" in {
-    val method = Constants.RANDOM_FOREST
+    val method = Classifiers.RANDOM_FOREST
     ClassificationPipeline.run(sparkSession, trainFile, testFile, metricsPath, modelsPath, method)
 
     checkMetricsFile(filePattern = "train")
@@ -43,7 +44,7 @@ class ClassificationPipelineTest extends FlatSpec with Matchers with BeforeAndAf
   }
 
   it should "classify the dataset using a Decision Tree Classifier" in {
-    val method = Constants.DECISION_TREE
+    val method = Classifiers.DECISION_TREE
     ClassificationPipeline.run(sparkSession, trainFile, testFile, metricsPath, modelsPath, method)
 
     checkMetricsFile(filePattern = "train")
@@ -52,7 +53,7 @@ class ClassificationPipelineTest extends FlatSpec with Matchers with BeforeAndAf
   }
 
   it should "classify the dataset using a MultiLayer Perceptron" in {
-    val method = Constants.MLP
+    val method = Classifiers.MLP
     ClassificationPipeline.run(sparkSession, trainFile, testFile, metricsPath, modelsPath, method)
 
     checkMetricsFile(filePattern = "train")
@@ -61,7 +62,7 @@ class ClassificationPipelineTest extends FlatSpec with Matchers with BeforeAndAf
   }
 
   it should "classify the dataset using a Naive Bayes Classifier" in {
-    val method = Constants.NAIVE_BAYES
+    val method = Classifiers.NAIVE_BAYES
     ClassificationPipeline.run(sparkSession, trainFile, testFile, metricsPath, modelsPath, method)
 
     checkMetricsFile(filePattern = "train")

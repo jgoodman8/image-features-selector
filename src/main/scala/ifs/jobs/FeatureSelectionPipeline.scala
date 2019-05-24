@@ -1,6 +1,6 @@
 package ifs.jobs
 
-import ifs.Constants._
+import ifs.Constants.Selectors._
 import ifs.services.{DataService, FeatureSelectionService, PreprocessService}
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.{DataFrame, SparkSession}

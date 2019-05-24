@@ -1,6 +1,6 @@
 package ifs.jobs
 
-import ifs.Constants._
+import ifs.Constants.Classifiers._
 import ifs.services.{ClassificationService, ConfigurationService, DataService, PreprocessService}
 import org.apache.spark.internal.Logging
 import org.apache.spark.ml.Model
@@ -30,7 +30,8 @@ object ClassificationPipeline extends App with Logging {
     val metricNames: Array[String] = ConfigurationService.Model.getMetrics
     val trainMetricValues: Array[Double] = ClassificationService.evaluate(model, train, label, metricNames)
     val testMetricValues: Array[Double] = ClassificationService.evaluate(model, test, label, metricNames)
-
+    print(trainMetricValues)
+    print(testMetricValues)
     ClassificationService.saveMetrics(session, metricNames, trainMetricValues, metricsPath + "/train_eval_")
     ClassificationService.saveMetrics(session, metricNames, testMetricValues, metricsPath + "/test_eval_")
   }

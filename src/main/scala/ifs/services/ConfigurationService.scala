@@ -25,6 +25,23 @@ object ConfigurationService {
       def getBlockSize: Int = configuration.getInt("Model.mlp.blockSize")
     }
 
+    object RandomForest {
+      def getNumTrees: Int = configuration.getInt("Model.rf.numTrees")
+
+      def hasMaxDepth: Boolean = configuration.hasPath("Model.rf.maxDepth")
+
+      def getMaxDepth: Int = configuration.getInt("Model.rf.maxDepth")
+
+      def getSubsamplingRate: Double = {
+        val configPath = "Model.rf.subsamplingRate"
+        if (configuration.hasPath(configPath)) {
+          configuration.getDouble(configPath)
+        }
+
+        1.0F
+      }
+    }
+
     def getMetrics: Array[String] = Array("accuracy", "f1")
   }
 

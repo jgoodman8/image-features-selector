@@ -2,7 +2,8 @@ package ifs.validation
 
 import ifs.jobs.{ClassificationPipeline, FeatureSelectionPipeline}
 import ifs.services.{ConfigurationService, DataService}
-import ifs.{Constants, TestUtils}
+import ifs.TestUtils
+import ifs.Constants.{Classifiers, Selectors}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
@@ -28,8 +29,8 @@ class ValidationTests extends FlatSpec with Matchers with BeforeAndAfter {
 
   it should "perform the full pipeline (ChiSQ + Logistic Regression)" in {
     val numFeatures = 3
-    val featureSelectionMethod = Constants.CHI_SQ
-    val classificationMethod = Constants.LOGISTIC_REGRESSION
+    val featureSelectionMethod = Selectors.CHI_SQ
+    val classificationMethod = Classifiers.LOGISTIC_REGRESSION
 
     FeatureSelectionPipeline.run(sparkSession, trainFile, testFile, featuresPath, featureSelectionMethod, numFeatures)
 
@@ -50,8 +51,8 @@ class ValidationTests extends FlatSpec with Matchers with BeforeAndAfter {
 
   it should "perform the full pipeline (mRMR Selection + Random Forest)" in {
     val numFeatures = 3
-    val featureSelectionMethod = Constants.MRMR
-    val classificationMethod = Constants.RANDOM_FOREST
+    val featureSelectionMethod = Selectors.MRMR
+    val classificationMethod = Classifiers.RANDOM_FOREST
 
     FeatureSelectionPipeline.run(sparkSession, trainFile, testFile, featuresPath, featureSelectionMethod, numFeatures)
 
@@ -72,8 +73,8 @@ class ValidationTests extends FlatSpec with Matchers with BeforeAndAfter {
 
   it should "perform the full pipeline (RELIEF Selection + Random Forest)" in {
     val numFeatures = 3
-    val featureSelectionMethod = Constants.RELIEF
-    val classificationMethod = Constants.RANDOM_FOREST
+    val featureSelectionMethod = Selectors.RELIEF
+    val classificationMethod = Classifiers.RANDOM_FOREST
 
     FeatureSelectionPipeline.run(sparkSession, trainFile, testFile, featuresPath, featureSelectionMethod, numFeatures)
 
@@ -94,8 +95,8 @@ class ValidationTests extends FlatSpec with Matchers with BeforeAndAfter {
 
   it should "perform the full pipeline (RELIEF Selection + Naive Bayes)" in {
     val numFeatures = 3
-    val featureSelectionMethod = Constants.RELIEF
-    val classificationMethod = Constants.NAIVE_BAYES
+    val featureSelectionMethod = Selectors.RELIEF
+    val classificationMethod = Classifiers.NAIVE_BAYES
 
     FeatureSelectionPipeline.run(sparkSession, trainFile, testFile, featuresPath, featureSelectionMethod, numFeatures)
 
@@ -116,8 +117,8 @@ class ValidationTests extends FlatSpec with Matchers with BeforeAndAfter {
 
   it should "perform the full pipeline (PCA Feature Extraction + Naive Bayes)" in {
     val numFeatures = 3
-    val featureSelectionMethod = Constants.PCA
-    val classificationMethod = Constants.NAIVE_BAYES
+    val featureSelectionMethod = Selectors.PCA
+    val classificationMethod = Classifiers.NAIVE_BAYES
 
     FeatureSelectionPipeline.run(sparkSession, trainFile, testFile, featuresPath, featureSelectionMethod, numFeatures)
 

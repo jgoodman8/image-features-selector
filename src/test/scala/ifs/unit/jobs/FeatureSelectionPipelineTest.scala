@@ -2,7 +2,8 @@ package ifs.unit.jobs
 
 import ifs.jobs.FeatureSelectionPipeline
 import ifs.services.DataService
-import ifs.{Constants, TestUtils}
+import ifs.TestUtils
+import ifs.Constants.Selectors
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
@@ -24,7 +25,7 @@ class FeatureSelectionPipelineTest extends FlatSpec with Matchers with BeforeAnd
 
   "runFeatureSelectionPipeline" should "select the best features using the ChiSq method" in {
     val numFeatures = 2
-    FeatureSelectionPipeline.run(sparkSession, trainFile, testFile, outputPath, Constants.CHI_SQ, numFeatures)
+    FeatureSelectionPipeline.run(sparkSession, trainFile, testFile, outputPath, Selectors.CHI_SQ, numFeatures)
 
     val outputTrain: String = TestUtils.findFileByPattern(outputPath, pattern = "train")
     val selectedTrain: DataFrame = DataService.load(sparkSession, outputTrain)
@@ -37,7 +38,7 @@ class FeatureSelectionPipelineTest extends FlatSpec with Matchers with BeforeAnd
 
   it should "select the best features using the mRMR" in {
     val numFeatures = 2
-    FeatureSelectionPipeline.run(sparkSession, trainFile, testFile, outputPath, Constants.MRMR, numFeatures)
+    FeatureSelectionPipeline.run(sparkSession, trainFile, testFile, outputPath, Selectors.MRMR, numFeatures)
 
     val outputTrain: String = TestUtils.findFileByPattern(outputPath, pattern = "train")
     val selectedTrain: DataFrame = DataService.load(sparkSession, outputTrain)
@@ -50,7 +51,7 @@ class FeatureSelectionPipelineTest extends FlatSpec with Matchers with BeforeAnd
 
   it should "select the best features using the RELIEF" in {
     val numFeatures = 2
-    FeatureSelectionPipeline.run(sparkSession, trainFile, testFile, outputPath, Constants.RELIEF, numFeatures)
+    FeatureSelectionPipeline.run(sparkSession, trainFile, testFile, outputPath, Selectors.RELIEF, numFeatures)
 
     val outputTrain: String = TestUtils.findFileByPattern(outputPath, pattern = "train")
     val selectedTrain: DataFrame = DataService.load(sparkSession, outputTrain)
@@ -63,7 +64,7 @@ class FeatureSelectionPipelineTest extends FlatSpec with Matchers with BeforeAnd
 
   it should "select the best features using the PCA method" in {
     val numFeatures = 2
-    FeatureSelectionPipeline.run(sparkSession, trainFile, testFile, outputPath, Constants.PCA, numFeatures)
+    FeatureSelectionPipeline.run(sparkSession, trainFile, testFile, outputPath, Selectors.PCA, numFeatures)
 
     val outputTrain: String = TestUtils.findFileByPattern(outputPath, pattern = "train")
     val selectedTrain: DataFrame = DataService.load(sparkSession, outputTrain)
