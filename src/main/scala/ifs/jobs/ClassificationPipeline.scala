@@ -5,6 +5,7 @@ import ifs.services.{ClassificationService, ConfigurationService, DataService, P
 import org.apache.spark.internal.Logging
 import org.apache.spark.ml.Model
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.storage.StorageLevel
 
 
 object ClassificationPipeline extends App with Logging {
@@ -52,7 +53,16 @@ object ClassificationPipeline extends App with Logging {
     val train: DataFrame = DataService.load(session, trainFile)
     val test: DataFrame = DataService.load(session, testFile)
 
+    train.persist(StorageLevel.MEMORY_AND_DISK)
+    test.persist(StorageLevel.MEMORY_AND_DISK)
+
     val Array(preprocessedTrain, preprocessedTest) = this.preprocess(train, test, label, features, method)
+
+    train.unpersist(true)
+    test.unpersist(true)
+
+    preprocessedTrain.persist(StorageLevel.MEMORY_AND_DISK)
+    preprocessedTest.persist(StorageLevel.MEMORY_AND_DISK)
 
     val model = this.fit(preprocessedTrain, label, features, method, modelPath)
 

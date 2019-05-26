@@ -4,6 +4,7 @@ import ifs.Constants.Selectors._
 import ifs.services.{DataService, FeatureSelectionService, PreprocessService}
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.storage.StorageLevel
 
 object FeatureSelectionPipeline extends App with Logging {
 
@@ -40,10 +41,22 @@ object FeatureSelectionPipeline extends App with Logging {
     val train: DataFrame = DataService.load(session, trainFile)
     val test: DataFrame = DataService.load(session, testFile)
 
+    train.persist(StorageLevel.MEMORY_AND_DISK)
+    test.persist(StorageLevel.MEMORY_AND_DISK)
+
     val Array(preprocessedTrain, preprocessedTest) = this.preprocess(train, test, label, features, method)
+
+    train.unpersist(true)
+    test.unpersist(true)
+
+    preprocessedTrain.persist(StorageLevel.MEMORY_AND_DISK)
+    preprocessedTest.persist(StorageLevel.MEMORY_AND_DISK)
 
     val Array(selectedTrain, selectedTest) = this
       .select(preprocessedTrain, preprocessedTest, features, label, selectedFeatures, method, numFeatures)
+
+    preprocessedTrain.unpersist(true)
+    preprocessedTest.unpersist(true)
 
     DataService.save(selectedTrain, fileDir = f"$outputPath%s/train", label, selectedFeatures)
     DataService.save(selectedTest, fileDir = f"$outputPath%s/test", label, selectedFeatures)
