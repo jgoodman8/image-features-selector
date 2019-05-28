@@ -96,6 +96,21 @@ object ClassificationService {
       .fit(data)
   }
 
+  def fitWithSVM(data: DataFrame, label: String, features: String): OneVsRestModel = {
+
+    val linearSVC = new LinearSVC()
+      .setMaxIter(Model.LinearSVC.getMaxIter)
+      .setRegParam(Model.LinearSVC.getRegParam)
+      .setFeaturesCol(features)
+      .setLabelCol(label)
+
+    new OneVsRest()
+      .setFeaturesCol(features)
+      .setLabelCol(label)
+      .setClassifier(linearSVC)
+      .fit(data)
+  }
+
   def crossValidate[T](data: DataFrame, label: String, features: String, classifier: Estimator[_],
                        params: Array[ParamMap])(implicit tag: ClassTag[T]): T = {
 

@@ -70,6 +70,23 @@ class ClassificationPipelineTest extends FlatSpec with Matchers with BeforeAndAf
     checkModelPath()
   }
 
+  it should "classify the dataset using a Support Vector Machine with Linear Kernel" in {
+    val method = Classifiers.SVM
+    ClassificationPipeline.run(sparkSession, trainFile, testFile, metricsPath, modelsPath, method)
+
+    checkMetricsFile(filePattern = "train")
+    checkMetricsFile(filePattern = "test")
+    checkModelPath()
+  }
+
+  ignore should "classify the BoW features without selecting any feature" in {
+    val method = Classifiers.RANDOM_FOREST
+    val train = "data/tiny-imagenet-features/tiny_imagenet_bow_k100_surf_train_v2.csv"
+    val test = "data/tiny-imagenet-features/tiny_imagenet_bow_k100_surf_val_v2.csv"
+
+    ClassificationPipeline.run(sparkSession, train, test, metricsPath, modelsPath, method)
+  }
+
   def checkMetricsFile(filePattern: String): Unit = {
     val metricsFile: String = TestUtils.findFileByPattern(metricsPath, filePattern)
     val metrics: DataFrame = DataService.load(sparkSession, metricsFile)

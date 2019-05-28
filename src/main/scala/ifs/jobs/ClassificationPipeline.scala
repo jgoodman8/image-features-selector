@@ -17,6 +17,7 @@ object ClassificationPipeline extends App with Logging {
       case DECISION_TREE => ClassificationService.fitWithDecisionTree(data, label, features)
       case MLP => ClassificationService.fitWithMLP(data, label, features)
       case NAIVE_BAYES => ClassificationService.fitWithNaiveBayes(data, label, features)
+      case SVM => ClassificationService.fitWithSVM(data, label, features)
       case _ => throw new NoSuchMethodException("The classifier method is not implemented")
     }
 
@@ -31,8 +32,7 @@ object ClassificationPipeline extends App with Logging {
     val metricNames: Array[String] = ConfigurationService.Model.getMetrics
     val trainMetricValues: Array[Double] = ClassificationService.evaluate(model, train, label, metricNames)
     val testMetricValues: Array[Double] = ClassificationService.evaluate(model, test, label, metricNames)
-    print(trainMetricValues)
-    print(testMetricValues)
+
     ClassificationService.saveMetrics(session, metricNames, trainMetricValues, metricsPath + "/train_eval_")
     ClassificationService.saveMetrics(session, metricNames, testMetricValues, metricsPath + "/test_eval_")
   }
@@ -42,7 +42,7 @@ object ClassificationPipeline extends App with Logging {
     method match {
       case LOGISTIC_REGRESSION | RANDOM_FOREST | DECISION_TREE | MLP => PreprocessService
         .preprocessData(train, test, label, features)
-      case NAIVE_BAYES => PreprocessService.preprocessAndScaleData(train, test, label, features)
+      case NAIVE_BAYES | SVM => PreprocessService.preprocessAndScaleData(train, test, label, features)
       case _ => throw new NoSuchMethodException("The classifier method is not implemented")
     }
   }

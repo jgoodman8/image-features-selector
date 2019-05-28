@@ -19,6 +19,12 @@ object ConfigurationService {
       def getRegParam: Double = configuration.getDouble("Model.logisticRegression.regParam")
     }
 
+    object LinearSVC {
+      def getMaxIter: Int = configuration.getInt("Model.linearSVC.maxIter")
+
+      def getRegParam: Double = configuration.getDouble("Model.linearSVC.regParam")
+    }
+
     object MLP {
       def getMaxIter: Int = configuration.getInt("Model.mlp.maxIter")
 

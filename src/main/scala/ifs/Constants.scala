@@ -8,6 +8,7 @@ object Constants {
     val DECISION_TREE: String = "tree" // Decision Tree
     val MLP: String = "mlp" // Multi Layer Perceptron
     val NAIVE_BAYES: String = "nb" // Naive Bayes
+    val SVM: String = "svm" // Support Vector Machine with Linear Kernel
   }
 
   object Selectors {
