@@ -1,7 +1,7 @@
 package ifs.jobs
 
 import ifs.Constants.Classifiers._
-import ifs.services.{ClassificationService, ConfigurationService, DataService, PreprocessService}
+import ifs.services.{ClassificationService, ConfigurationService, DataService, ModelService, PreprocessService}
 import org.apache.spark.internal.Logging
 import org.apache.spark.ml.Model
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -12,12 +12,12 @@ object ClassificationPipeline extends App with Logging {
 
   def fit(data: DataFrame, label: String, features: String, method: String, modelPath: String): Model[_] = {
     val model = method match {
-      case LOGISTIC_REGRESSION => ClassificationService.fitWithLogisticRegression(data, label, features)
-      case RANDOM_FOREST => ClassificationService.fitWithRandomForest(data, label, features)
-      case DECISION_TREE => ClassificationService.fitWithDecisionTree(data, label, features)
-      case MLP => ClassificationService.fitWithMLP(data, label, features)
-      case NAIVE_BAYES => ClassificationService.fitWithNaiveBayes(data, label, features)
-      case SVM => ClassificationService.fitWithSVM(data, label, features)
+      case LOGISTIC_REGRESSION => ModelService.fitWithLogisticRegression(data, label, features)
+      case RANDOM_FOREST => ModelService.fitWithRandomForest(data, label, features)
+      case DECISION_TREE => ModelService.fitWithDecisionTree(data, label, features)
+      case MLP => ModelService.fitWithMLP(data, label, features)
+      case NAIVE_BAYES => ModelService.fitWithNaiveBayes(data, label, features)
+      case SVM => ModelService.fitWithSVM(data, label, features)
       case _ => throw new NoSuchMethodException("The classifier method is not implemented")
     }
 
