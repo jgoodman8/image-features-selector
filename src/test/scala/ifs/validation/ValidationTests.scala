@@ -1,9 +1,9 @@
 package ifs.validation
 
-import ifs.jobs.{ClassificationPipeline, FeatureSelectionPipeline}
-import ifs.services.{ConfigurationService, DataService}
-import ifs.TestUtils
 import ifs.Constants.{Classifiers, Selectors}
+import ifs.TestUtils
+import ifs.jobs.{ClassificationPipeline, FeatureSelectionPipeline}
+import ifs.services.DataService
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
@@ -44,9 +44,9 @@ class ValidationTests extends FlatSpec with Matchers with BeforeAndAfter {
 
     ClassificationPipeline.run(sparkSession, outputTrain, outputTest, metricsPath, modelsPath, classificationMethod)
 
-    checkMetricsFile(filePattern = "train")
-    checkMetricsFile(filePattern = "test")
-    checkModelPath()
+    TestUtils.checkMetricsFile(filePattern = "train", classificationMethod, metricsPath, sparkSession)
+    TestUtils.checkMetricsFile(filePattern = "test", classificationMethod, metricsPath, sparkSession)
+    TestUtils.checkModelPath(modelsPath)
   }
 
   it should "perform the full pipeline (mRMR Selection + Random Forest)" in {
@@ -66,9 +66,9 @@ class ValidationTests extends FlatSpec with Matchers with BeforeAndAfter {
 
     ClassificationPipeline.run(sparkSession, outputTrain, outputTest, metricsPath, modelsPath, classificationMethod)
 
-    checkMetricsFile(filePattern = "train")
-    checkMetricsFile(filePattern = "test")
-    checkModelPath()
+    TestUtils.checkMetricsFile(filePattern = "train", classificationMethod, metricsPath, sparkSession)
+    TestUtils.checkMetricsFile(filePattern = "test", classificationMethod, metricsPath, sparkSession)
+    TestUtils.checkModelPath(modelsPath)
   }
 
   it should "perform the full pipeline (RELIEF Selection + Random Forest)" in {
@@ -88,9 +88,9 @@ class ValidationTests extends FlatSpec with Matchers with BeforeAndAfter {
 
     ClassificationPipeline.run(sparkSession, outputTrain, outputTest, metricsPath, modelsPath, classificationMethod)
 
-    checkMetricsFile(filePattern = "train")
-    checkMetricsFile(filePattern = "test")
-    checkModelPath()
+    TestUtils.checkMetricsFile(filePattern = "train", classificationMethod, metricsPath, sparkSession)
+    TestUtils.checkMetricsFile(filePattern = "test", classificationMethod, metricsPath, sparkSession)
+    TestUtils.checkModelPath(modelsPath)
   }
 
   it should "perform the full pipeline (RELIEF Selection + Naive Bayes)" in {
@@ -110,9 +110,9 @@ class ValidationTests extends FlatSpec with Matchers with BeforeAndAfter {
 
     ClassificationPipeline.run(sparkSession, outputTrain, outputTest, metricsPath, modelsPath, classificationMethod)
 
-    checkMetricsFile(filePattern = "train")
-    checkMetricsFile(filePattern = "test")
-    checkModelPath()
+    TestUtils.checkMetricsFile(filePattern = "train", classificationMethod, metricsPath, sparkSession)
+    TestUtils.checkMetricsFile(filePattern = "test", classificationMethod, metricsPath, sparkSession)
+    TestUtils.checkModelPath(modelsPath)
   }
 
   it should "perform the full pipeline (PCA Feature Extraction + Naive Bayes)" in {
@@ -132,20 +132,8 @@ class ValidationTests extends FlatSpec with Matchers with BeforeAndAfter {
 
     ClassificationPipeline.run(sparkSession, outputTrain, outputTest, metricsPath, modelsPath, classificationMethod)
 
-    checkMetricsFile(filePattern = "train")
-    checkMetricsFile(filePattern = "test")
-    checkModelPath()
-  }
-
-  def checkMetricsFile(filePattern: String): Unit = {
-    val metricsFile: String = TestUtils.findFileByPattern(metricsPath, filePattern)
-    val metrics: DataFrame = DataService.load(sparkSession, metricsFile)
-    assert(metrics.columns.length == 2)
-    assert(metrics.count() == ConfigurationService.Model.getMetrics.length)
-  }
-
-  def checkModelPath(): Unit = {
-    val modelFile: String = TestUtils.findFileByPattern(modelsPath)
-    assert(modelFile.nonEmpty)
+    TestUtils.checkMetricsFile(filePattern = "train", classificationMethod, metricsPath, sparkSession)
+    TestUtils.checkMetricsFile(filePattern = "test", classificationMethod, metricsPath, sparkSession)
+    TestUtils.checkModelPath(modelsPath)
   }
 }

@@ -89,6 +89,8 @@ object ConfigurationService {
     def getModelPath: String = configuration.getString("Session.modelPath")
 
     def getMetricsPath: String = configuration.getString("Session.metricsPath")
+
+    def getNumTopAccuracy: Int = configuration.getInt("Session.numTopAccuracy")
   }
 
 }

@@ -75,6 +75,7 @@ object ModelService {
       .setRegParam(Model.LinearSVC.getRegParam)
       .setFeaturesCol(features)
       .setLabelCol(label)
+      .setRawPredictionCol("rawScores")
 
     val classifier: OneVsRest = new OneVsRest()
       .setFeaturesCol(features)

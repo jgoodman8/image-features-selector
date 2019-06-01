@@ -1,12 +1,14 @@
 package ifs.services
 
-import ifs.services.ConfigurationService.Model
-import org.apache.spark.ml.{Estimator, Model}
+import breeze.linalg.sum
+import ifs.services.ConfigurationService.{Model, Session}
 import org.apache.spark.ml.evaluation.{Evaluator, MulticlassClassificationEvaluator}
+import org.apache.spark.ml.linalg.DenseVector
 import org.apache.spark.ml.param.ParamMap
 import org.apache.spark.ml.tuning.{CrossValidator, ParamGridBuilder}
-import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
+import org.apache.spark.ml.{Estimator, Model}
 import org.apache.spark.sql.functions.monotonically_increasing_id
+import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
 
 import scala.reflect.ClassTag
 
@@ -39,10 +41,10 @@ object ClassificationService {
     }
   }
 
-  def evaluate(model: Model[_], test: DataFrame, labelCol: String, metricNames: Array[String],
+  def evaluate(model: Model[_], data: DataFrame, labelCol: String, metricNames: Array[String],
                predictionCol: String = "prediction"): Array[Double] = {
 
-    val predictions = model.transform(test).select(labelCol, predictionCol)
+    val predictions = model.transform(data).select(labelCol, predictionCol)
 
     metricNames.map(metricName => {
       new MulticlassClassificationEvaluator()
@@ -51,6 +53,31 @@ object ClassificationService {
         .setMetricName(metricName)
         .evaluate(predictions)
     })
+
+
+  }
+
+  def getTopAccuracy(model: Model[_], data: DataFrame, label: String, probability: String = "probability"): Double = {
+
+    val predictions: Array[Row] = model.transform(data).select(label, probability).collect()
+    val scores: Array[Int] = predictions.map(this.getInstanceScore(_, label, probability))
+
+    val topAccuracy: Double = sum(scores) / scores.length.toDouble
+    topAccuracy
+  }
+
+  private def getInstanceScore(row: Row, labelCol: String, probabilityCol: String): Int = {
+    val label = row.getAs[Double](labelCol)
+    val probabilities: Array[Double] = row.getAs[DenseVector](probabilityCol).toArray
+
+    if (this.getTopLabels(probabilities).contains(label)) 1 else 0
+  }
+
+  private def getTopLabels(probabilities: Array[Double]): Array[Double] = {
+    val N = Session.getNumTopAccuracy
+    val topLabels = probabilities.zipWithIndex.sortBy(_._1).takeRight(N).map(_._2.toDouble)
+
+    topLabels
   }
 
   def saveMetrics(session: SparkSession, names: Array[String], values: Array[Double], outputFolder: String): Unit = {

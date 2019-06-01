@@ -27,11 +27,20 @@ object ClassificationPipeline extends App with Logging {
   }
 
   def evaluate(session: SparkSession, model: Model[_], train: DataFrame, test: DataFrame, label: String,
-               metricsPath: String): Unit = {
+               metricsPath: String, method: String): Unit = {
 
-    val metricNames: Array[String] = ConfigurationService.Model.getMetrics
-    val trainMetricValues: Array[Double] = ClassificationService.evaluate(model, train, label, metricNames)
-    val testMetricValues: Array[Double] = ClassificationService.evaluate(model, test, label, metricNames)
+    var metricNames: Array[String] = ConfigurationService.Model.getMetrics
+    var trainMetricValues: Array[Double] = ClassificationService.evaluate(model, train, label, metricNames)
+    var testMetricValues: Array[Double] = ClassificationService.evaluate(model, test, label, metricNames)
+
+    if (method == NAIVE_BAYES || method == DECISION_TREE || method == RANDOM_FOREST) {
+      val trainTopAccuracy = ClassificationService.getTopAccuracy(model, train, label)
+      val testTopAccuracy = ClassificationService.getTopAccuracy(model, test, label)
+
+      metricNames = metricNames :+ "topNAccuracy"
+      trainMetricValues = trainMetricValues :+ trainTopAccuracy
+      testMetricValues = testMetricValues :+ testTopAccuracy
+    }
 
     ClassificationService.saveMetrics(session, metricNames, trainMetricValues, metricsPath + "/train_eval_")
     ClassificationService.saveMetrics(session, metricNames, testMetricValues, metricsPath + "/test_eval_")
@@ -66,7 +75,7 @@ object ClassificationPipeline extends App with Logging {
 
     val model = this.fit(preprocessedTrain, label, features, method, modelPath)
 
-    this.evaluate(session, model, preprocessedTrain, preprocessedTest, label, metricsPath)
+    this.evaluate(session, model, preprocessedTrain, preprocessedTest, label, metricsPath, method)
   }
 
   val Array(appName: String, trainFile: String, testFile: String, method: String) = args
