@@ -49,7 +49,7 @@ object TestUtils {
     assert(metrics.columns.length == 2)
 
     if (method == Classifiers.NAIVE_BAYES || method == Classifiers.DECISION_TREE ||
-      method == Classifiers.RANDOM_FOREST) {
+      method == Classifiers.RANDOM_FOREST || method == Classifiers.MLP) {
 
       val metricsData = metrics.collect()
       assert(metricsData.length == ConfigurationService.Model.getMetrics.length + 1)

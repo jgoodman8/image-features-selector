@@ -2,13 +2,14 @@ package ifs.services
 
 import breeze.linalg.sum
 import ifs.services.ConfigurationService.{Model, Session}
+import org.apache.spark.ml.{Estimator, Model}
+import org.apache.spark.ml.classification.{MLP, MultilayerPerceptronClassificationModel}
 import org.apache.spark.ml.evaluation.{Evaluator, MulticlassClassificationEvaluator}
 import org.apache.spark.ml.linalg.DenseVector
 import org.apache.spark.ml.param.ParamMap
 import org.apache.spark.ml.tuning.{CrossValidator, ParamGridBuilder}
-import org.apache.spark.ml.{Estimator, Model}
-import org.apache.spark.sql.functions.monotonically_increasing_id
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
+import org.apache.spark.sql.functions.monotonically_increasing_id
 
 import scala.reflect.ClassTag
 
@@ -57,13 +58,41 @@ object ClassificationService {
 
   }
 
-  def getTopAccuracy(model: Model[_], data: DataFrame, label: String, probability: String = "probability"): Double = {
+  def getTopAccuracyN(model: Model[_], data: DataFrame, label: String, probability: String = "probability"): Double = {
 
-    val predictions: Array[Row] = model.transform(data).select(label, probability).collect()
+    val predictions: Array[Row] = this.getPredictions(model, data, label, probability)
     val scores: Array[Int] = predictions.map(this.getInstanceScore(_, label, probability))
 
     val topAccuracy: Double = sum(scores) / scores.length.toDouble
     topAccuracy
+  }
+
+  private def predictMLP(mlp: MultilayerPerceptronClassificationModel, data: DataFrame, labelCol: String,
+                         probabilitiesCol: String, featuresCol: String = "features"): DataFrame = {
+
+    import data.sparkSession.implicits._
+
+    val model: MLP = new MLP(mlp.uid, mlp.layers, mlp.weights)
+
+    val predictions = data
+      .rdd.map((row: Row) => {
+      val label = row.getAs[Double](labelCol)
+      val features: DenseVector = row.getAs[DenseVector](featuresCol)
+      val probabilities: DenseVector = model.customPredict(features).toDense
+
+      (probabilities, label)
+    })
+
+    predictions.toDF(probabilitiesCol, labelCol)
+  }
+
+  private def getPredictions(model: Model[_], data: DataFrame, label: String, probability: String): Array[Row] = {
+    val predictions = model match {
+      case model: MultilayerPerceptronClassificationModel => this.predictMLP(model, data, label, probability)
+      case model: Model[_] => model.transform(data)
+    }
+
+    predictions.select(label, probability).collect()
   }
 
   private def getInstanceScore(row: Row, labelCol: String, probabilityCol: String): Int = {

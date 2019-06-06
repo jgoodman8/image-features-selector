@@ -33,9 +33,9 @@ object ClassificationPipeline extends App with Logging {
     var trainMetricValues: Array[Double] = ClassificationService.evaluate(model, train, label, metricNames)
     var testMetricValues: Array[Double] = ClassificationService.evaluate(model, test, label, metricNames)
 
-    if (method == NAIVE_BAYES || method == DECISION_TREE || method == RANDOM_FOREST) {
-      val trainTopAccuracy = ClassificationService.getTopAccuracy(model, train, label)
-      val testTopAccuracy = ClassificationService.getTopAccuracy(model, test, label)
+    if (method == NAIVE_BAYES || method == DECISION_TREE || method == RANDOM_FOREST || method == MLP) {
+      val trainTopAccuracy = ClassificationService.getTopAccuracyN(model, train, label)
+      val testTopAccuracy = ClassificationService.getTopAccuracyN(model, test, label)
 
       metricNames = metricNames :+ "topNAccuracy"
       trainMetricValues = trainMetricValues :+ trainTopAccuracy

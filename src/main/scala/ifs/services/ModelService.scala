@@ -62,10 +62,9 @@ object ModelService {
       .setFeaturesCol(features)
       .setMaxIter(Model.MLP.getMaxIter)
       .setBlockSize(Model.MLP.getBlockSize)
+      .setLayers(Model.MLP.getLayers)
 
-    val gridParameters = this.getMLPGridParams(data, label, features, classifier)
-
-    crossValidate[MultilayerPerceptronClassificationModel](data, label, features, classifier, gridParameters)
+    crossValidate[MultilayerPerceptronClassificationModel](data, label, features, classifier, null)
   }
 
   def fitWithSVM(data: DataFrame, label: String, features: String): OneVsRestModel = {

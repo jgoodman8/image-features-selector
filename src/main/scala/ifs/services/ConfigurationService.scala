@@ -29,6 +29,12 @@ object ConfigurationService {
       def getMaxIter: Int = configuration.getInt("Model.mlp.maxIter")
 
       def getBlockSize: Int = configuration.getInt("Model.mlp.blockSize")
+
+      def getLayers: Array[Int] = {
+        val layers = configuration.getIntList("Model.mlp.layers").toArray()
+
+        layers.map(item => item.asInstanceOf[Int])
+      }
     }
 
     object RandomForest {

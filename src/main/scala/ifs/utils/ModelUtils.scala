@@ -20,7 +20,7 @@ object ModelUtils {
       .setLabelCol(label)
   }
 
-  def buildStringIndexerModel(data: DataFrame) = {
+  def buildStringIndexerModel(data: DataFrame): StringIndexerModel = {
     new StringIndexer()
       .setInputCol("label")
       .setOutputCol("indexedLabel")
