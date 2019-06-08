@@ -2,10 +2,11 @@ package ifs.services
 
 import breeze.linalg.sum
 import ifs.services.ConfigurationService.{Model, Session}
+import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.ml.{Estimator, Model}
 import org.apache.spark.ml.classification.{MLP, MultilayerPerceptronClassificationModel}
 import org.apache.spark.ml.evaluation.{Evaluator, MulticlassClassificationEvaluator}
-import org.apache.spark.ml.linalg.DenseVector
+import org.apache.spark.ml.linalg.{DenseVector, Vector}
 import org.apache.spark.ml.param.ParamMap
 import org.apache.spark.ml.tuning.{CrossValidator, ParamGridBuilder}
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
@@ -70,15 +71,16 @@ object ClassificationService {
   private def predictMLP(mlp: MultilayerPerceptronClassificationModel, data: DataFrame, labelCol: String,
                          probabilitiesCol: String, featuresCol: String = "features"): DataFrame = {
 
-    import data.sparkSession.implicits._
+    val session = data.sparkSession
+    val broadcastModel: Broadcast[MLP] = session.sparkContext.broadcast(new MLP(mlp.uid, mlp.layers, mlp.weights))
 
-    val model: MLP = new MLP(mlp.uid, mlp.layers, mlp.weights)
+    import session.implicits._
 
     val predictions = data
       .rdd.map((row: Row) => {
       val label = row.getAs[Double](labelCol)
-      val features: DenseVector = row.getAs[DenseVector](featuresCol)
-      val probabilities: DenseVector = model.customPredict(features).toDense
+      val features: Vector = row.getAs[Vector](featuresCol)
+      val probabilities: DenseVector = broadcastModel.value.customPredict(features).toDense
 
       (probabilities, label)
     })
