@@ -6,9 +6,10 @@
 
 ## Table of contents
 
-1. [Introduction](#intro)
-2. [What this project contains](#content)
-3. [Technologies](#tech)
+1. [Overview](#intro)
+2. [Requirements](#requirements)
+3. [Installation](#installation)
+4. [Run](#run)
 
 ## <a name="intro"/>1. Introduction</a>
 
@@ -43,19 +44,40 @@ salient features. This type of approach is at the head of the state of the art, 
 problems. Therefore, it can be very interesting to make a comparison between the results obtained with the methods of 
 feature selection traditional and hybrid, based on neural networks.
 
-## <a name="content"/>2. What does this project contain</a>
+## <a name="requirements"/>Requirements</a>
 
-This project will try to solve the problems described at the top. For it, it will focus in:
-
-- Find out the relevance of the different images features and the relevance of the scale at which they are extracted.
-- Apply such feature selection methods, by using large sets of images, on Big Data platforms.
-- Compare the results when applying deep learning algorithms at the feature selection.
-
-## <a name="tech"/>3. Technologies</a>
-
-- Dataset: [Tiny Imagenet](http://cs231n.stanford.edu/tiny-imagenet-200.zip) 
 - Scala 2.11.8
-- Spark 2.3.1
-- Additional Libraries: 
-    - [Spark Deep Learning](https://github.com/databricks/spark-deep-learning)
+- SBT
+- HDFS Cluster Compatible with Apache Spark 2.4.2
 
+## <a name="installation"/>Installation</a>
+
+```bash
+sbt clean assembly
+```
+
+## <a name="run"/>Run</a>
+
+The runnable Spark applications are within the `src/main/scala/ifs/jobs` folder.
+
+### Feature Selection Pipeline
+
+This application loads data from HDFS stored in a CSV format. It pre-process data and selects features using 
+the selected method. The resulting datasets are stored in HDFS within the selected output folder.
+
+```bash
+spark-submit --class src.main.scala.ifs.jobs.FeatureSelectionPipeline app.jar appName train test output method nFeatures 
+```
+
+Available feature selection methods are listed within the `src/main/scala/ifs/Constants.scala`.
+
+### Classification Pipeline
+
+This application loads data from HDFS stored in a CSV format. It pre-process data and performs training the selected 
+model. Once the model is trained, top-1 and top-N accuracy are evaluated. 
+
+```bash
+spark-submit --class src.main.scala.ifs.jobs.ClassificationPipeline app.jar appName train test method 
+```
+
+Available training models are listed within the `src/main/scala/ifs/Constants.scala`.
