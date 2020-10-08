@@ -1,23 +1,27 @@
 package ifs.jobs
 
 import ifs.Constants.Classifiers._
-import ifs.services.{ClassificationService, ConfigurationService, DataService, ModelService, PreprocessService}
+import ifs.services._
 import org.apache.spark.internal.Logging
 import org.apache.spark.ml.Model
 import org.apache.spark.sql.{DataFrame, SparkSession}
-//import org.apache.spark.storage.StorageLevel
 
 
 object ClassificationPipeline extends App with Logging {
 
-  def fit(data: DataFrame, label: String, features: String, method: String, modelPath: String): Model[_] = {
+  def fit(trainData: DataFrame,
+          validationData: DataFrame,
+          label: String,
+          features: String,
+          method: String,
+          modelPath: String): Model[_] = {
     val model = method match {
-      case LOGISTIC_REGRESSION => ModelService.fitWithLogisticRegression(data, label, features)
-      case RANDOM_FOREST => ModelService.fitWithRandomForest(data, label, features)
-      case DECISION_TREE => ModelService.fitWithDecisionTree(data, label, features)
-      case MLP => ModelService.fitWithMLP(data, label, features)
-      case NAIVE_BAYES => ModelService.fitWithNaiveBayes(data, label, features)
-      case SVM => ModelService.fitWithSVM(data, label, features)
+      case LOGISTIC_REGRESSION => ModelService.fitWithLogisticRegression(trainData, validationData, label, features)
+      case RANDOM_FOREST => ModelService.fitWithRandomForest(trainData, validationData, label, features)
+      case DECISION_TREE => ModelService.fitWithDecisionTree(trainData, validationData, label, features)
+      case MLP => ModelService.fitWithMLP(trainData, validationData, label, features)
+      case NAIVE_BAYES => ModelService.fitWithNaiveBayes(trainData, label, features)
+      case SVM => ModelService.fitWithSVM(trainData, validationData, label, features)
       case _ => throw new NoSuchMethodException("The classifier method is not implemented")
     }
 
@@ -42,50 +46,60 @@ object ClassificationPipeline extends App with Logging {
       testMetricValues = testMetricValues :+ testTopAccuracy
     }
 
-    ClassificationService.saveMetrics(session, metricNames, trainMetricValues, metricsPath + "/train_eval_")
-    ClassificationService.saveMetrics(session, metricNames, testMetricValues, metricsPath + "/test_eval_")
+    ClassificationService.saveMetrics(session, metricNames, trainMetricValues, metricsPath + "/train")
+    ClassificationService.saveMetrics(session, metricNames, testMetricValues, metricsPath + "/test")
   }
 
-  def preprocess(train: DataFrame, test: DataFrame, label: String, features: String,
+  def preprocess(datasets: Array[DataFrame],
+                 label: String,
+                 features: String,
                  method: String): Array[DataFrame] = {
     method match {
       case LOGISTIC_REGRESSION | RANDOM_FOREST | DECISION_TREE | MLP => PreprocessService
-        .preprocessData(train, test, label, features)
-      case NAIVE_BAYES | SVM => PreprocessService.preprocessAndScaleData(train, test, label, features)
+        .preprocessData(datasets, label, features)
+      case NAIVE_BAYES | SVM => PreprocessService.preprocessAndScaleData(datasets, label, features)
       case _ => throw new NoSuchMethodException("The classifier method is not implemented")
     }
   }
 
-  def run(session: SparkSession, trainFile: String, testFile: String, metricsPath: String, modelPath: String,
-          method: String, features: String = "features", label: String = "output_label"): Unit = {
+  def run(session: SparkSession,
+          trainFile: String,
+          validationFile: String,
+          testFile: String,
+          metricsPath: String,
+          modelPath: String,
+          method: String,
+          features: String = "features",
+          label: String = "output_label"): Unit = {
 
-    val train: DataFrame = DataService.load(session, trainFile)
-    val test: DataFrame = DataService.load(session, testFile)
+    val hasValidationData = validationFile != null
+    val datasets = PipelineUtils.load(session, trainFile, validationFile, testFile, hasValidationData)
+    val preprocessedDatasets = this.preprocess(datasets, label, features, method)
 
-    //    train.persist(StorageLevel.MEMORY_AND_DISK)
-    //    test.persist(StorageLevel.MEMORY_AND_DISK)
-
-    val Array(preprocessedTrain, preprocessedTest) = this.preprocess(train, test, label, features, method)
-
-    //    train.unpersist(true)
-    //    test.unpersist(true)
-
-    //    preprocessedTrain.persist(StorageLevel.MEMORY_AND_DISK)
-    //    preprocessedTest.persist(StorageLevel.MEMORY_AND_DISK)
-
-    val model = this.fit(preprocessedTrain, label, features, method, modelPath)
-
-    this.evaluate(session, model, preprocessedTrain, preprocessedTest, label, metricsPath, method)
+    if (hasValidationData) {
+      val model = this.fit(preprocessedDatasets(0), preprocessedDatasets(1), label, features, method, modelPath)
+      this.evaluate(session, model, preprocessedDatasets(0), preprocessedDatasets(2), label, metricsPath, method)
+    } else {
+      val model = this.fit(preprocessedDatasets(0), null, label, features, method, modelPath)
+      this.evaluate(session, model, preprocessedDatasets(0), preprocessedDatasets(1), label, metricsPath, method)
+    }
   }
 
-  val Array(appName: String, trainFile: String, testFile: String, method: String) = args
-
+  val appName = args(0)
   val sparkSession: SparkSession = SparkSession.builder().appName(appName).getOrCreate()
 
   val metricsPath: String = ConfigurationService.Session.getMetricsPath
   val modelsPath: String = ConfigurationService.Session.getModelPath
 
-  this.run(sparkSession, trainFile, testFile, metricsPath, modelsPath, method)
+  val sizeWithValidationFile = 5
+  val sizeWithNoValidationFile = 4
+  if (args.length == sizeWithValidationFile) {
+    val Array(_, trainFile: String, validationFile: String, testFile: String, method: String) = args
+    this.run(sparkSession, trainFile, validationFile, testFile, metricsPath, modelsPath, method)
+  } else if (args.length == sizeWithNoValidationFile) {
+    val Array(_, trainFile: String, testFile: String, method: String) = args
+    this.run(sparkSession, trainFile, null, testFile, metricsPath, modelsPath, method)
+  }
 
   sparkSession.stop()
 }

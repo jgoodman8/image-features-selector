@@ -26,7 +26,7 @@ class ClassificationPipelineTest extends FlatSpec with Matchers with BeforeAndAf
 
   "trainPipeline" should "classify the dataset using a Logistic Regression model" in {
     val method = Classifiers.LOGISTIC_REGRESSION
-    ClassificationPipeline.run(sparkSession, trainFile, testFile, metricsPath, modelsPath, method)
+    ClassificationPipeline.run(sparkSession, trainFile, null, testFile, metricsPath, modelsPath, method)
 
     TestUtils.checkMetricsFile(filePattern = "train", method, metricsPath, sparkSession)
     TestUtils.checkMetricsFile(filePattern = "test", method, metricsPath, sparkSession)
@@ -35,7 +35,7 @@ class ClassificationPipelineTest extends FlatSpec with Matchers with BeforeAndAf
 
   it should "classify the dataset using a Random Forest model" in {
     val method = Classifiers.RANDOM_FOREST
-    ClassificationPipeline.run(sparkSession, trainFile, testFile, metricsPath, modelsPath, method)
+    ClassificationPipeline.run(sparkSession, trainFile, null, testFile, metricsPath, modelsPath, method)
 
     TestUtils.checkMetricsFile(filePattern = "train", method, metricsPath, sparkSession)
     TestUtils.checkMetricsFile(filePattern = "test", method, metricsPath, sparkSession)
@@ -44,7 +44,7 @@ class ClassificationPipelineTest extends FlatSpec with Matchers with BeforeAndAf
 
   it should "classify the dataset using a Decision Tree Classifier" in {
     val method = Classifiers.DECISION_TREE
-    ClassificationPipeline.run(sparkSession, trainFile, testFile, metricsPath, modelsPath, method)
+    ClassificationPipeline.run(sparkSession, trainFile, null, testFile, metricsPath, modelsPath, method)
 
     TestUtils.checkMetricsFile(filePattern = "train", method, metricsPath, sparkSession)
     TestUtils.checkMetricsFile(filePattern = "test", method, metricsPath, sparkSession)
@@ -53,7 +53,7 @@ class ClassificationPipelineTest extends FlatSpec with Matchers with BeforeAndAf
 
   it should "classify the dataset using a MultiLayer Perceptron" in {
     val method = Classifiers.MLP
-    ClassificationPipeline.run(sparkSession, trainFile, testFile, metricsPath, modelsPath, method)
+    ClassificationPipeline.run(sparkSession, trainFile, null, testFile, metricsPath, modelsPath, method)
 
     TestUtils.checkMetricsFile(filePattern = "train", method, metricsPath, sparkSession)
     TestUtils.checkMetricsFile(filePattern = "test", method, metricsPath, sparkSession)
@@ -62,7 +62,7 @@ class ClassificationPipelineTest extends FlatSpec with Matchers with BeforeAndAf
 
   it should "classify the dataset using a Naive Bayes Classifier" in {
     val method = Classifiers.NAIVE_BAYES
-    ClassificationPipeline.run(sparkSession, trainFile, testFile, metricsPath, modelsPath, method)
+    ClassificationPipeline.run(sparkSession, trainFile, null, testFile, metricsPath, modelsPath, method)
 
     TestUtils.checkMetricsFile(filePattern = "train", method, metricsPath, sparkSession)
     TestUtils.checkMetricsFile(filePattern = "test", method, metricsPath, sparkSession)
@@ -71,18 +71,51 @@ class ClassificationPipelineTest extends FlatSpec with Matchers with BeforeAndAf
 
   it should "classify the dataset using a Support Vector Machine with Linear Kernel" in {
     val method = Classifiers.SVM
-    ClassificationPipeline.run(sparkSession, trainFile, testFile, metricsPath, modelsPath, method)
+    ClassificationPipeline.run(sparkSession, trainFile, null, testFile, metricsPath, modelsPath, method)
 
     TestUtils.checkMetricsFile(filePattern = "train", method, metricsPath, sparkSession)
     TestUtils.checkMetricsFile(filePattern = "test", method, metricsPath, sparkSession)
     TestUtils.checkModelPath(modelsPath)
   }
 
+  it should "classify using a predefined validation set and a Logistic Regression Model" in {
+    // setup
+    val method = Classifiers.LOGISTIC_REGRESSION
+    val train = "data/iris/train.csv"
+    val validation = "data/iris/val.csv"
+    val test = "data/iris/test.csv"
+
+    // act
+    ClassificationPipeline.run(sparkSession, train, validation, test, metricsPath, modelsPath, method)
+
+    // assert
+    TestUtils.checkMetricsFile(filePattern = "train", method, metricsPath, sparkSession)
+    TestUtils.checkMetricsFile(filePattern = "test", method, metricsPath, sparkSession)
+    TestUtils.checkModelPath(modelsPath)
+  }
+
+  it should "classify using a predefined validation set and a Random Forest" in {
+    // setup
+    val method = Classifiers.RANDOM_FOREST
+    val train = "data/iris/train.csv"
+    val validation = "data/iris/val.csv"
+    val test = "data/iris/test.csv"
+
+    // act
+    ClassificationPipeline.run(sparkSession, train, validation, test, metricsPath, modelsPath, method)
+
+    // assert
+    TestUtils.checkMetricsFile(filePattern = "train", method, metricsPath, sparkSession)
+    TestUtils.checkMetricsFile(filePattern = "test", method, metricsPath, sparkSession)
+    TestUtils.checkModelPath(modelsPath)
+  }
+
+  // Test ignored to be used as "offline" testing using different datasets
   ignore should "classify the BoW features without selecting any feature" in {
     val method = Classifiers.RANDOM_FOREST
     val train = "data/tiny-imagenet-features/tiny_imagenet_bow_k100_surf_train_v2.csv"
     val test = "data/tiny-imagenet-features/tiny_imagenet_bow_k100_surf_val_v2.csv"
 
-    ClassificationPipeline.run(sparkSession, train, test, metricsPath, modelsPath, method)
+    ClassificationPipeline.run(sparkSession, train, null, test, metricsPath, modelsPath, method)
   }
 }

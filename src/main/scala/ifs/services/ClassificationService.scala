@@ -3,14 +3,14 @@ package ifs.services
 import breeze.linalg.sum
 import ifs.services.ConfigurationService.{Model, Session}
 import org.apache.spark.broadcast.Broadcast
-import org.apache.spark.ml.{Estimator, Model}
 import org.apache.spark.ml.classification.{MLP, MultilayerPerceptronClassificationModel}
 import org.apache.spark.ml.evaluation.{Evaluator, MulticlassClassificationEvaluator}
 import org.apache.spark.ml.linalg.{DenseVector, Vector}
 import org.apache.spark.ml.param.ParamMap
-import org.apache.spark.ml.tuning.{CrossValidator, ParamGridBuilder}
-import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
+import org.apache.spark.ml.tuning.{CrossValidator, ParamGridBuilder, TrainValidationSplit, ValidationSplit}
+import org.apache.spark.ml.{Estimator, Model}
 import org.apache.spark.sql.functions.monotonically_increasing_id
+import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
 
 import scala.reflect.ClassTag
 
@@ -22,7 +22,28 @@ object ClassificationService {
       .setMetricName(metric)
   }
 
-  def crossValidate[T](data: DataFrame, label: String, features: String, classifier: Estimator[_],
+  def validate[T](data: DataFrame, validationSet: DataFrame, label: String, classifier: Estimator[_],
+                  params: Array[ParamMap] = null)(implicit tag: ClassTag[T]): T = {
+
+    val validator = new ValidationSplit()
+      .setEstimator(classifier)
+      .setEvaluator(this.getEvaluator(label))
+      .setValidationSet(validationSet)
+
+    if (Model.isGridSearchActivated && params != null) {
+      validator.setEstimatorParamMaps(params)
+    } else {
+      validator.setEstimatorParamMaps(new ParamGridBuilder().build())
+    }
+
+    validator
+      .fit(data).bestModel match {
+      case model: T => model
+      case _ => throw new UnsupportedOperationException("Unexpected model type")
+    }
+  }
+
+  def crossValidate[T](data: DataFrame, label: String, classifier: Estimator[_],
                        params: Array[ParamMap])(implicit tag: ClassTag[T]): T = {
 
     val crossValidator = new CrossValidator()
@@ -124,6 +145,6 @@ object ClassificationService {
       .select("metric", "value")
       .write.mode(SaveMode.Overwrite)
       .option("header", "true")
-      .csv(outputFolder + System.currentTimeMillis.toString)
+      .csv(outputFolder + "/" + System.currentTimeMillis.toString)
   }
 }

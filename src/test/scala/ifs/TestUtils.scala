@@ -3,7 +3,8 @@ package ifs
 import java.io.File
 
 import ifs.Constants.Classifiers
-import ifs.services.{ConfigurationService, DataService}
+import ifs.services.ConfigurationService
+import org.apache.spark.sql.types.{DoubleType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.scalactic.TolerantNumerics
 
@@ -33,19 +34,28 @@ object TestUtils {
   def clearDirectory(path: String): Unit = new Directory(new File(path)).deleteRecursively()
 
   def findFileByPattern(basePath: String, pattern: String = ""): String = {
-    val fileName = new File(basePath).listFiles()
+    val folderName = new File(basePath).listFiles()
       .filter(file => file.isDirectory)
       .map(file => file.getName)
       .filter(fileName => fileName.contains(pattern))(0)
 
-    basePath + "/" + fileName
+    val baseFolder = basePath + "/" + folderName
+    val subFolderNames = new File(baseFolder).listFiles()
+      .filter(file => file.isDirectory)
+      .map(file => file.getName).toList
+
+    if (subFolderNames.nonEmpty) {
+      return baseFolder + "/" + subFolderNames.head
+    }
+
+    baseFolder
   }
 
   def checkMetricsFile(filePattern: String, method: String, metricsPath: String, sparkSession: SparkSession): Unit = {
-    implicit val custom = TolerantNumerics.tolerantDoubleEquality(0.000001)
+    implicit val custom = TolerantNumerics.tolerantDoubleEquality(0.0001)
 
-    val metricsFile: String = TestUtils.findFileByPattern(metricsPath, filePattern)
-    val metrics: DataFrame = DataService.load(sparkSession, metricsFile)
+    val metrics: DataFrame = this.getMetricsData(sparkSession, filePattern, metricsPath)
+
     assert(metrics.columns.length == 2)
 
     if (method == Classifiers.NAIVE_BAYES || method == Classifiers.DECISION_TREE ||
@@ -53,7 +63,7 @@ object TestUtils {
 
       val metricsData = metrics.collect()
       assert(metricsData.length == ConfigurationService.Model.getMetrics.length + 1)
-      assert(metricsData(0).getDouble(1) == metricsData(1).getDouble(1))
+      assert(custom.areEqual(metricsData(0).getDouble(1), metricsData(1).getDouble(1)))
 
     } else {
       assert(metrics.count() == ConfigurationService.Model.getMetrics.length)
@@ -63,5 +73,14 @@ object TestUtils {
   def checkModelPath(modelsPath: String): Unit = {
     val modelFile: String = TestUtils.findFileByPattern(modelsPath)
     assert(modelFile.nonEmpty)
+  }
+
+  private def getMetricsData(sparkSession: SparkSession, filePattern: String, metricsPath: String): DataFrame = {
+    val metricsSchema: StructType = StructType(List(StructField("metric", StringType), StructField("value", DoubleType)))
+    val metricsFile: String = TestUtils.findFileByPattern(metricsPath, filePattern)
+    sparkSession.read.format("csv")
+      .option("header", "true")
+      .schema(metricsSchema)
+      .load(metricsFile)
   }
 }

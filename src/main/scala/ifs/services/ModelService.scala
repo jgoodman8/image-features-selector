@@ -1,11 +1,13 @@
 package ifs.services
 
 import ifs.services.ConfigurationService.Model
-import ifs.services.ClassificationService.crossValidate
+import org.apache.spark.ml.Estimator
 import org.apache.spark.ml.classification._
 import org.apache.spark.ml.param.ParamMap
 import org.apache.spark.ml.tuning.ParamGridBuilder
 import org.apache.spark.sql.DataFrame
+
+import scala.reflect.ClassTag
 
 object ModelService {
 
@@ -16,7 +18,7 @@ object ModelService {
       .fit(data)
   }
 
-  def fitWithLogisticRegression(data: DataFrame, label: String, features: String): OneVsRestModel = {
+  def fitWithLogisticRegression(data: DataFrame, validation: DataFrame, label: String, features: String): OneVsRestModel = {
 
     val logisticRegression = new LogisticRegression()
       .setMaxIter(Model.LogisticRegression.getMaxIter)
@@ -30,10 +32,10 @@ object ModelService {
       .setLabelCol(label)
       .setClassifier(logisticRegression)
 
-    crossValidate[OneVsRestModel](data, label, features, classifier, null)
+    this.fitAndValidate[OneVsRestModel](data, validation, label, classifier, null)
   }
 
-  def fitWithRandomForest(data: DataFrame, label: String, features: String): RandomForestClassificationModel = {
+  def fitWithRandomForest(data: DataFrame, validation: DataFrame, label: String, features: String): RandomForestClassificationModel = {
     val classifier = new RandomForestClassifier()
       .setLabelCol(label)
       .setFeaturesCol(features)
@@ -44,18 +46,18 @@ object ModelService {
       classifier.setMaxDepth(Model.RandomForest.getMaxDepth)
     }
 
-    crossValidate[RandomForestClassificationModel](data, label, features, classifier, null)
+    this.fitAndValidate[RandomForestClassificationModel](data, validation, label, classifier, null)
   }
 
-  def fitWithDecisionTree(data: DataFrame, label: String, features: String): DecisionTreeClassificationModel = {
+  def fitWithDecisionTree(data: DataFrame, validation: DataFrame, label: String, features: String): DecisionTreeClassificationModel = {
     val classifier = new DecisionTreeClassifier()
       .setLabelCol(label)
       .setFeaturesCol(features)
 
-    crossValidate[DecisionTreeClassificationModel](data, label, features, classifier, null)
+    this.fitAndValidate[DecisionTreeClassificationModel](data, validation, label, classifier, null)
   }
 
-  def fitWithMLP(data: DataFrame, label: String, features: String): MultilayerPerceptronClassificationModel = {
+  def fitWithMLP(data: DataFrame, validation: DataFrame, label: String, features: String): MultilayerPerceptronClassificationModel = {
 
     val classifier = new MultilayerPerceptronClassifier()
       .setLabelCol(label)
@@ -64,10 +66,12 @@ object ModelService {
       .setBlockSize(Model.MLP.getBlockSize)
       .setLayers(Model.MLP.getLayers)
 
-    crossValidate[MultilayerPerceptronClassificationModel](data, label, features, classifier, null)
+    val gridParams = this.getMLPGridParams(data, label, features, classifier)
+
+    this.fitAndValidate[MultilayerPerceptronClassificationModel](data, validation, label, classifier, gridParams)
   }
 
-  def fitWithSVM(data: DataFrame, label: String, features: String): OneVsRestModel = {
+  def fitWithSVM(data: DataFrame, validation: DataFrame, label: String, features: String): OneVsRestModel = {
 
     val linearSVC = new LinearSVC()
       .setMaxIter(Model.LinearSVC.getMaxIter)
@@ -81,7 +85,7 @@ object ModelService {
       .setLabelCol(label)
       .setClassifier(linearSVC)
 
-    crossValidate[OneVsRestModel](data, label, features, classifier, null)
+    this.fitAndValidate[OneVsRestModel](data, validation, label, classifier, null)
   }
 
   def getMLPGridParams(data: DataFrame, label: String, features: String,
@@ -102,5 +106,13 @@ object ModelService {
     new ParamGridBuilder()
       .addGrid(classifier.layers, gridLayers)
       .build()
+  }
+
+  private def fitAndValidate[T](train: DataFrame, validation: DataFrame, label: String, classifier: Estimator[_],
+                                params: Array[ParamMap] = null)(implicit tag: ClassTag[T]): T = {
+    if (validation != null)
+      ClassificationService.validate[T](train, validation, label, classifier, params)
+    else
+      ClassificationService.crossValidate[T](train, label, classifier, params)
   }
 }

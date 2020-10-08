@@ -7,22 +7,31 @@ import org.apache.spark.sql.DataFrame
 
 object FeatureSelectionService {
 
-  def selectWithChiSq(train: DataFrame, test: DataFrame, features: String, label: String, selectedFeatures: String,
+  def selectWithChiSq(datasets: Array[DataFrame],
+                      features: String,
+                      label: String,
+                      selectedFeatures: String,
                       numTopFeatures: Int = 10): Array[DataFrame] = {
 
+    val train = datasets(0)
     val selector = new ChiSqSelector()
       .setNumTopFeatures(numTopFeatures)
       .setFeaturesCol(features)
       .setLabelCol(label)
       .setOutputCol(selectedFeatures)
-      .fit(train.union(test))
+      .fit(train)
 
-    this.transform(selector, train, test, features, label, selectedFeatures)
+    this.transform(selector, datasets, features, label, selectedFeatures)
   }
 
-  def selectWithInfoTheoretic(train: DataFrame, test: DataFrame, features: String, label: String,
-                              selectedFeatures: String, method: String, numTopFeatures: Int = 10): Array[DataFrame] = {
+  def selectWithInfoTheoretic(datasets: Array[DataFrame],
+                              features: String,
+                              label: String,
+                              selectedFeatures: String,
+                              method: String,
+                              numTopFeatures: Int = 10): Array[DataFrame] = {
 
+    val train = datasets(0)
     val selector = new InfoThSelector()
       .setSelectCriterion(method)
       .setNPartitions(FeatureSelection.InfoTheoretic.getNumberOfPartitions)
@@ -30,14 +39,18 @@ object FeatureSelectionService {
       .setFeaturesCol(features)
       .setLabelCol(label)
       .setOutputCol(selectedFeatures)
-      .fit(train.union(test))
+      .fit(train)
 
-    this.transform(selector, train, test, features, label, selectedFeatures)
+    this.transform(selector, datasets, features, label, selectedFeatures)
   }
 
-  def selectWithRelief(train: DataFrame, test: DataFrame, features: String, label: String, selectedFeatures: String,
+  def selectWithRelief(datasets: Array[DataFrame],
+                       features: String,
+                       label: String,
+                       selectedFeatures: String,
                        numTopFeatures: Int = 10): Array[DataFrame] = {
 
+    val train = datasets(0)
     val selector = new ReliefFRSelector()
       .setNumTopFeatures(numTopFeatures)
       .setEstimationRatio(FeatureSelection.Relief.getEstimationRatio)
@@ -46,32 +59,34 @@ object FeatureSelectionService {
       .setInputCol(features)
       .setLabelCol(label)
       .setOutputCol(selectedFeatures)
-      .fit(train.union(test))
+      .fit(train)
 
-    this.transform(selector, train, test, features, label, selectedFeatures)
+    this.transform(selector, datasets, features, label, selectedFeatures)
   }
 
-  def selectWithPCA(train: DataFrame, test: DataFrame, features: String, label: String, selectedFeatures: String,
+  def selectWithPCA(datasets: Array[DataFrame],
+                    features: String,
+                    label: String,
+                    selectedFeatures: String,
                     numTopFeatures: Int = 10): Array[DataFrame] = {
 
+    val train = datasets(0)
     val selector = new PCA()
       .setInputCol(features)
       .setOutputCol(selectedFeatures)
       .setK(numTopFeatures)
-      .fit(train.union(test))
+      .fit(train)
 
-    this.transform(selector, train, test, features, label, selectedFeatures)
+    this.transform(selector, datasets, features, label, selectedFeatures)
   }
 
-  private def transform(selector: Model[_], train: DataFrame, test: DataFrame, features: String, label: String,
+  private def transform(selector: Model[_],
+                        datasets: Array[DataFrame],
+                        features: String,
+                        label: String,
                         selectedFeatures: String): Array[DataFrame] = {
-
-    val selectedTrain = selector.transform(train).drop(features).select(selectedFeatures, label)
-    val selectedTest = selector.transform(test).drop(features).select(selectedFeatures, label)
-
-    Array(
-      DataService.extractDenseRows(selectedTrain, selectedFeatures, label),
-      DataService.extractDenseRows(selectedTest, selectedFeatures, label)
-    )
+    datasets
+      .map(selector.transform(_).drop(features).select(selectedFeatures, label))
+      .map(DataService.extractDenseRows(_, selectedFeatures, label))
   }
 }

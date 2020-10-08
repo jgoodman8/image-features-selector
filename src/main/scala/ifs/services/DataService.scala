@@ -1,6 +1,6 @@
 package ifs.services
 
-import org.apache.spark.ml.linalg.{DenseVector, Vector, SparseVector}
+import org.apache.spark.ml.linalg.{DenseVector, SparseVector, Vector}
 import org.apache.spark.sql.functions.{col, max, udf}
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 
@@ -14,7 +14,7 @@ object DataService {
       .load(fileRoute)
   }
 
-  def save(data: DataFrame, fileDir: String, label: String, features: String): Unit = {
+  def save(data: DataFrame, fileDir: String): Unit = {
     data
       .write.mode(SaveMode.Overwrite)
       .option("header", "true")
