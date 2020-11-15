@@ -10,6 +10,7 @@ object DataService {
 
     sparkSession.read.format("csv")
       .option("header", "true")
+      .option("maxColumns", ConfigurationService.Session.getMaxCSVLength)
       .option("inferSchema", "true")
       .load(fileRoute)
   }

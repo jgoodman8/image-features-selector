@@ -97,6 +97,8 @@ object ConfigurationService {
     def getMetricsPath: String = configuration.getString("Session.metricsPath")
 
     def getNumTopAccuracy: Int = configuration.getInt("Session.numTopAccuracy")
+
+    def getMaxCSVLength: Int = configuration.getInt("Session.maxCSVLength")
   }
 
 }
