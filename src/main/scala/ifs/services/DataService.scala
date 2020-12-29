@@ -8,7 +8,7 @@ object DataService {
 
   def load(sparkSession: SparkSession, fileRoute: String): DataFrame = {
 
-    sparkSession.read.format("csv")
+    sparkSession.read.format("com.databricks.spark.csv")
       .option("header", "true")
       .option("maxColumns", ConfigurationService.Session.getMaxCSVLength)
       .option("inferSchema", "true")
