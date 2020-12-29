@@ -1,5 +1,6 @@
 package ifs.jobs
 
+import ifs.services.ConfigurationService
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 
@@ -13,7 +14,11 @@ object SelectColumns extends App {
     val dstFilename = dstPath.getName
 
     //   Load data (from top50)
-    val data: DataFrame = session.read.csv(src)
+    val data: DataFrame = session.read.format("com.databricks.spark.csv")
+      .option("header", "true")
+      .option("maxColumns", ConfigurationService.Session.getMaxCSVLength)
+      .option("inferSchema", "true")
+      .load(src)
 
     //   Store top50 in one CSV
     data.coalesce(1).write.mode(SaveMode.Overwrite).csv(dstFolder + "/top50/" + dstFilename)
