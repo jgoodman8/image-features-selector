@@ -10,7 +10,7 @@ object SelectColumns extends App {
   def run(session: SparkSession, src: String, dst: String, targetFeaturesTop33: Int, targetFeaturesTop10: Int): Unit = {
 
     val dstPath = new File(dst)
-    val dstFolder = dstPath.getParentFile.getName
+    val dstFolder = dstPath.getParentFile.getAbsolutePath
     val dstFilename = dstPath.getName
 
     //   Load data (from top50)
@@ -24,17 +24,13 @@ object SelectColumns extends App {
     data.coalesce(1).write.mode(SaveMode.Overwrite).csv(dstFolder + "/top50/" + dstFilename)
 
     //   Select top33 and in one CSV
-    val selectedTop33Columns = (data.columns.take(targetFeaturesTop33) :+ data.columns.tail)
-      .map(colName => col(colName.toString))
-
+    val selectedTop33Columns = (data.columns.take(targetFeaturesTop33) :+ data.columns.last).map(col)
     data.select(selectedTop33Columns: _*)
       .coalesce(1)
       .write.mode(SaveMode.Overwrite).csv(dstFolder + "/top33/" + dstFilename)
 
     //    Select top10 and in one CSV
-    val selectedTop10Columns = (data.columns.take(targetFeaturesTop10) :+ data.columns.tail)
-      .map(colName => col(colName.toString))
-
+    val selectedTop10Columns = (data.columns.take(targetFeaturesTop10) :+ data.columns.last).map(col)
     data.select(selectedTop10Columns: _*)
       .coalesce(1)
       .write.mode(SaveMode.Overwrite).csv(dstFolder + "/top10/" + dstFilename)
