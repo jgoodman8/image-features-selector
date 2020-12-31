@@ -90,8 +90,8 @@ object ClassificationPipeline extends App with Logging {
 
   val modelsPath: String = ConfigurationService.Session.getModelPath
 
-  val sizeWithValidationFile = 5
-  val sizeWithNoValidationFile = 4
+  val sizeWithValidationFile = 6
+  val sizeWithNoValidationFile = 5
   if (args.length == sizeWithValidationFile) {
     var Array(_, trainFile: String, valFile: String, testFile: String, method: String, metricsPath: String) = args
     if (metricsPath == null) {
