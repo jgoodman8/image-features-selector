@@ -88,16 +88,22 @@ object ClassificationPipeline extends App with Logging {
   val appName = args(0)
   val sparkSession: SparkSession = SparkSession.builder().appName(appName).getOrCreate()
 
-  val metricsPath: String = ConfigurationService.Session.getMetricsPath
   val modelsPath: String = ConfigurationService.Session.getModelPath
 
   val sizeWithValidationFile = 5
   val sizeWithNoValidationFile = 4
   if (args.length == sizeWithValidationFile) {
-    val Array(_, trainFile: String, validationFile: String, testFile: String, method: String) = args
-    this.run(sparkSession, trainFile, validationFile, testFile, metricsPath, modelsPath, method)
+    var Array(_, trainFile: String, valFile: String, testFile: String, method: String, metricsPath: String) = args
+    if (metricsPath == null) {
+      metricsPath = ConfigurationService.Session.getMetricsPath
+    }
+
+    this.run(sparkSession, trainFile, valFile, testFile, metricsPath, modelsPath, method)
   } else if (args.length == sizeWithNoValidationFile) {
-    val Array(_, trainFile: String, testFile: String, method: String) = args
+    var Array(_, trainFile: String, testFile: String, method: String, metricsPath: String) = args
+    if (metricsPath == null) {
+      metricsPath = ConfigurationService.Session.getMetricsPath
+    }
     this.run(sparkSession, trainFile, null, testFile, metricsPath, modelsPath, method)
   }
 
