@@ -10,7 +10,7 @@ object SelectColumns extends App {
   def run(session: SparkSession, src: String, dst: String, targetFeaturesTop33: Int, targetFeaturesTop10: Int): Unit = {
 
     val dstPath = new File(dst)
-    val dstFolder = dstPath.getParentFile.getAbsolutePath
+    val dstFolder = dstPath.getParentFile.getPath
     val dstFilename = dstPath.getName
 
     //   Load data (from top50)
