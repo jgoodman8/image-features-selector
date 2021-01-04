@@ -33,7 +33,10 @@ object SelectColumns extends App {
     val selectedTop10Columns = (data.columns.take(targetFeaturesTop10) :+ data.columns.last).map(col)
     data.select(selectedTop10Columns: _*)
       .coalesce(1)
-      .write.mode(SaveMode.Overwrite).csv(dstFolder + "/top10/" + dstFilename)
+      .write
+      .mode(SaveMode.Overwrite)
+      .option("header", "true")
+      .csv(dstFolder + "/top10/" + dstFilename)
 
   }
 

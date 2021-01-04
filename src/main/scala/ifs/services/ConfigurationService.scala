@@ -23,6 +23,8 @@ object ConfigurationService {
       def getMaxIter: Int = configuration.getInt("Model.linearSVC.maxIter")
 
       def getRegParam: Double = configuration.getDouble("Model.linearSVC.regParam")
+
+      def getParallelism: Int = configuration.getInt("Model.linearSVC.parallelism")
     }
 
     object MLP {
@@ -37,12 +39,54 @@ object ConfigurationService {
       }
     }
 
+    object DecisionTree {
+      def getMaxDepth: Int = {
+        val configPath = "Model.dt.maxDepth"
+        if (configuration.hasPath(configPath)) {
+          configuration.getInt(configPath)
+        } else {
+          5
+        }
+      }
+
+      def getMaxBins: Int = {
+        val configPath = "Model.dt.maxBins"
+        if (configuration.hasPath(configPath)) {
+          configuration.getInt(configPath)
+        } else {
+          32 // Default value
+        }
+      }
+    }
+
     object RandomForest {
-      def getNumTrees: Int = configuration.getInt("Model.rf.numTrees")
+      def getNumTrees: Int = {
+        val configPath = "Model.rf.numTrees"
+        if (configuration.hasPath(configPath)) {
+          configuration.getInt(configPath)
+        } else {
+          20
+        }
+      }
 
-      def hasMaxDepth: Boolean = configuration.hasPath("Model.rf.maxDepth")
 
-      def getMaxDepth: Int = configuration.getInt("Model.rf.maxDepth")
+      def getMaxDepth: Int = {
+        val configPath = "Model.rf.maxDepth"
+        if (configuration.hasPath(configPath)) {
+          configuration.getInt(configPath)
+        } else {
+          5
+        }
+      }
+
+      def getMaxBins: Int = {
+        val configPath = "Model.rf.maxBins"
+        if (configuration.hasPath(configPath)) {
+          configuration.getInt(configPath)
+        } else {
+          32 // Default value
+        }
+      }
 
       def getSubsamplingRate: Double = {
         val configPath = "Model.rf.subsamplingRate"
@@ -50,7 +94,7 @@ object ConfigurationService {
           configuration.getDouble(configPath)
         }
 
-        1.0F
+        1.0F // Default value
       }
     }
 

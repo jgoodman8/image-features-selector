@@ -41,10 +41,8 @@ object ModelService {
       .setFeaturesCol(features)
       .setNumTrees(Model.RandomForest.getNumTrees)
       .setSubsamplingRate(Model.RandomForest.getSubsamplingRate)
-
-    if (Model.RandomForest.hasMaxDepth) {
-      classifier.setMaxDepth(Model.RandomForest.getMaxDepth)
-    }
+      .setMaxBins(Model.RandomForest.getMaxBins)
+      .setMaxDepth(Model.RandomForest.getMaxDepth)
 
     this.fitAndValidate[RandomForestClassificationModel](data, validation, label, classifier, null)
   }
@@ -53,6 +51,8 @@ object ModelService {
     val classifier = new DecisionTreeClassifier()
       .setLabelCol(label)
       .setFeaturesCol(features)
+      .setMaxBins(Model.DecisionTree.getMaxBins)
+      .setMaxDepth(Model.DecisionTree.getMaxDepth)
 
     this.fitAndValidate[DecisionTreeClassificationModel](data, validation, label, classifier, null)
   }
@@ -84,6 +84,7 @@ object ModelService {
       .setFeaturesCol(features)
       .setLabelCol(label)
       .setClassifier(linearSVC)
+      .setParallelism(Model.LinearSVC.getParallelism)
 
     this.fitAndValidate[OneVsRestModel](data, validation, label, classifier, null)
   }

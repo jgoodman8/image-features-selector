@@ -93,7 +93,7 @@ class ValidationSplit @Since("1.5.0")(@Since("1.5.0") override val uid: String)
   @Since("2.3.0")
   def setCollectSubModels(value: Boolean): this.type = set(collectSubModels, value)
 
-  @Since("2.0.0")
+  @Since("2.4.0")
   override def fit(dataset: Dataset[_]): ValidationSplitModel = instrumented { instr =>
     val schema = dataset.schema
     transformSchema(schema, logging = true)
