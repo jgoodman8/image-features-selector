@@ -24,7 +24,7 @@ import scala.language.existentials
 /**
   * Params for [[TrainValidationSplit]] and [[TrainValidationSplitModel]].
   */
-private[ml] trait TrainValidationSplitParams extends ValidatorParams {
+private[ml] trait ValidationSplitParams extends ValidatorParams {
 
   /** @group param */
   val validationSet: DatasetParam = new DatasetParam(this, "validationSet", "")
@@ -43,7 +43,7 @@ private[ml] trait TrainValidationSplitParams extends ValidatorParams {
 @Since("1.5.0")
 class ValidationSplit @Since("1.5.0")(@Since("1.5.0") override val uid: String)
   extends Estimator[ValidationSplitModel]
-    with TrainValidationSplitParams with HasParallelism with HasCollectSubModels // with ValidatorParams
+    with ValidationSplitParams with HasParallelism with HasCollectSubModels // with ValidatorParams
     with MLWritable with Logging {
 
   @Since("1.5.0")
@@ -223,7 +223,7 @@ class ValidationSplitModel private[ml](
                                         @Since("1.5.0") override val uid: String,
                                         @Since("1.5.0") val bestModel: Model[_],
                                         @Since("1.5.0") val validationMetrics: Array[Double])
-  extends Model[ValidationSplitModel] with TrainValidationSplitParams with MLWritable {
+  extends Model[ValidationSplitModel] with ValidationSplitParams with MLWritable {
 
   /** A Python-friendly auxiliary constructor. */
   private[ml] def this(uid: String, bestModel: Model[_], validationMetrics: JList[Double]) = {
