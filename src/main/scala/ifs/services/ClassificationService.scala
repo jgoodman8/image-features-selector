@@ -143,6 +143,7 @@ object ClassificationService {
     valuesColumn
       .join(namesColumn, valuesColumn("rowId1") === namesColumn("rowId2"))
       .select("metric", "value")
+      .coalesce(1)
       .write.mode(SaveMode.Overwrite)
       .option("header", "true")
       .csv(outputFolder + "/" + System.currentTimeMillis.toString)
