@@ -14,11 +14,15 @@ object GenerateDataSample extends App {
       .option("maxColumns", ConfigurationService.Session.getMaxCSVLength)
       .option("inferSchema", "true")
       .load(src)
+    data.cache()
 
     val count = data.count()
-    data
-      .sample(howManyTake.toFloat / count.toFloat)
-      .write.mode(SaveMode.Overwrite).csv(dst)
+    val sampledData = data.sample(howManyTake.toFloat / count.toFloat)
+
+    data.unpersist(false)
+    sampledData.cache()
+
+    sampledData.write.mode(SaveMode.Overwrite).csv(dst)
   }
 
   val Array(src: String, dst: String, howManyTake: String) = args
